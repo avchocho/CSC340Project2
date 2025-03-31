@@ -9,6 +9,7 @@ import java.util.Timer;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
+	private int userScore = 0;
     private JButton poll;
     private JButton submit;
     private JRadioButton[] options;
@@ -16,6 +17,7 @@ public class ClientWindow implements ActionListener {
     private JLabel question;
     private JLabel timer;
     private JLabel score;
+    private JLabel gameMessage;
     private TimerTask clock;
     private JFrame window;
 
@@ -45,9 +47,14 @@ public class ClientWindow implements ActionListener {
         timer.setBounds(250, 250, 100, 20);
         window.add(timer);
 
-        score = new JLabel("Score: 0");
+        score = new JLabel("Score: " + userScore);
         score.setBounds(50, 250, 100, 20);
         window.add(score);
+        
+        gameMessage = new JLabel(""); 
+        gameMessage.setBounds(10, 220, 350, 20); 
+        window.add(gameMessage);
+
 
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
@@ -95,7 +102,7 @@ public class ClientWindow implements ActionListener {
                     poll.setEnabled(true); // Poll opens
                 } else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, "You won the buzz! You may answer.");
+                        gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) {
@@ -104,7 +111,7 @@ public class ClientWindow implements ActionListener {
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, "Too late! Another player buzzed first.");
+                        gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
                         submit.setEnabled(false);
                         for (JRadioButton option : options) {
@@ -121,12 +128,17 @@ public class ClientWindow implements ActionListener {
                             System.out.println("Invalid time format from server: " + line);
                         }
                     }
-                } else if (line.toLowerCase().startsWith("correct") || line.toLowerCase().startsWith("wrong")) {
-                    JOptionPane.showMessageDialog(null, line);
-                } else if (line.startsWith("score")) {
-                    String scoreLine = line; // for lambda capture
-                    SwingUtilities.invokeLater(() -> {
-                        score.setText("Score: " + scoreLine.split(" ")[1]);
+                } else if(line.toLowerCase().startsWith("correct")) {
+                	gameMessage.setText("Correct answer! +10 points");
+                	userScore += 10;
+                	SwingUtilities.invokeLater(() -> {
+                        score.setText("Score: " + userScore);
+                    });
+                } else if(line.toLowerCase().startsWith("wrong")) {
+                	gameMessage.setText("Wrong answer! -10 points");
+                	userScore -= 10;
+                	SwingUtilities.invokeLater(() -> {
+                        score.setText("Score: " + userScore);
                     });
                 } else if (line.startsWith("Game Over")) {
                     JOptionPane.showMessageDialog(null, line);
