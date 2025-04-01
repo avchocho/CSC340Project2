@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 public class TriviaServer {
     private static final int PORT = 1234;
     private static final List<Question> questions = new ArrayList<>();
-    private static final List<ClientThread> clients = new ArrayList<>();
+    private static final List<ClientThread> clients = new CopyOnWriteArrayList<>();
     private static final Queue<String> messageQueue = new ConcurrentLinkedQueue<>();
 
     private static final ExecutorService pool = Executors.newCachedThreadPool();
@@ -18,24 +18,39 @@ public class TriviaServer {
         loadQuestions();
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("📡 Trivia Server started on port " + PORT);
+            System.out.println("📱 Trivia Server started on port " + PORT);
 
             UDPThread udpThread = new UDPThread();
             udpThread.start();
 
-            // Accept 1
-            while (clients.size() < 1) {
-                Socket clientSocket = serverSocket.accept();
-                ClientThread handler = new ClientThread(clientSocket, clients.size());
-                clients.add(handler);
-                pool.execute(handler);
-                System.out.println("Client-" + handler.getClientID() + " connected.");
+            // Accept clients continuously in a separate thread
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        Socket clientSocket = serverSocket.accept();
+                        ClientThread handler = new ClientThread(clientSocket, clients.size());
+                        if (currentQuestionIndex > 0) {
+                            handler.setJoinedMidGame(true);
+                            handler.sendMessage("Game in progress. You'll join on the next question.");
+                        }
+                        clients.add(handler);
+                        pool.execute(handler);
+                        System.out.println("Client-" + handler.getClientID() + " connected.");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+            // Wait until at least 2 clients are connected
+            while (clients.size() < 2) {
+                Thread.sleep(1000);
             }
 
-            System.out.println("🎮 Starting Trivia Game!");
+            System.out.println("Starting Trivia Game!");
             sendNextQuestionToAll();
 
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -52,6 +67,9 @@ public class TriviaServer {
         System.out.println("Sending Question " + (currentQuestionIndex + 1));
 
         for (ClientThread client : clients) {
+            if (client.hasJoinedMidGame()) {
+                client.setJoinedMidGame(false);
+            }
             client.setCanAnswer(false); // Wait for UDP buzz
             client.setCorrectAnswer(String.valueOf(q.getCorrectAnswer()));
             client.sendMessage(q.getQuestionNumber() + ":");
@@ -114,6 +132,14 @@ public class TriviaServer {
         }
     }
 
+    public static int getCurrentQuestionIndex() {
+        return currentQuestionIndex;
+    }
+
+    public static List<ClientThread> getClients() {
+        return clients;
+    }
+
     // === UDP Buzzer Thread ===
     private static class UDPThread extends Thread {
         private DatagramSocket socket;
@@ -132,7 +158,7 @@ public class TriviaServer {
                     String message = new String(packet.getData(), 0, packet.getLength());
                     InetAddress address = packet.getAddress();
 
-                    System.out.println("📨 UDP BUZZ from " + address.getHostAddress());
+                    System.out.println("📮 UDP BUZZ from " + address.getHostAddress());
 
                     if (receivingPoll && message.equalsIgnoreCase("buzz")) {
                         receivingPoll = false;

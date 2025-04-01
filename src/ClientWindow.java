@@ -55,7 +55,6 @@ public class ClientWindow implements ActionListener {
         gameMessage.setBounds(10, 220, 350, 20); 
         window.add(gameMessage);
 
-
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
         poll.addActionListener(this);
@@ -129,21 +128,30 @@ public class ClientWindow implements ActionListener {
                         }
                     }
                 } else if(line.toLowerCase().startsWith("correct")) {
-                	gameMessage.setText("Correct answer! +10 points");
-                	userScore += 10;
-                	SwingUtilities.invokeLater(() -> {
+                    gameMessage.setText("Correct answer! +10 points");
+                    userScore += 10;
+                    SwingUtilities.invokeLater(() -> {
                         score.setText("Score: " + userScore);
                     });
                 } else if(line.toLowerCase().startsWith("wrong")) {
-                	gameMessage.setText("Wrong answer! -10 points");
-                	userScore -= 10;
-                	SwingUtilities.invokeLater(() -> {
+                    gameMessage.setText("Wrong answer! -10 points");
+                    userScore -= 10;
+                    SwingUtilities.invokeLater(() -> {
                         score.setText("Score: " + userScore);
                     });
                 } else if (line.startsWith("Game Over")) {
                     JOptionPane.showMessageDialog(null, line);
                     poll.setEnabled(false);
                     submit.setEnabled(false);
+                } else if (line.startsWith("WaitForNextRound") || line.contains("join on the next question")) {
+                    SwingUtilities.invokeLater(() -> {
+                        gameMessage.setText("You’ve joined mid-game. You’ll start on the next question.");
+                        poll.setEnabled(false);
+                        submit.setEnabled(false);
+                        for (JRadioButton option : options) {
+                            option.setEnabled(false);
+                        }
+                    });
                 }
             }
         } catch (IOException e) {
