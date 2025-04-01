@@ -63,6 +63,14 @@ public class ClientThread implements Runnable {
         out.println(message);
     }
 
+    public void setJoinedMidGame(boolean joined) {
+        this.joinedMidGame = joined;
+    }
+
+    public boolean hasJoinedMidGame() {
+        return joinedMidGame;
+    }
+
     public void close() {
         try {
             if (in != null) in.close();
@@ -71,14 +79,6 @@ public class ClientThread implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void setJoinedMidGame(boolean joined) {
-        this.joinedMidGame = joined;
-    }
-
-    public boolean hasJoinedMidGame() {
-        return joinedMidGame;
     }
 
     private void checkAnswer(String answer) {
@@ -91,11 +91,11 @@ public class ClientThread implements Runnable {
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
-            System.out.println("\u2705 Client-" + clientID + " answered correctly.");
+            System.out.println("✅ Client-" + clientID + " answered correctly.");
         } else {
             decreaseScore(10);
             sendMessage("wrong " + score);
-            System.out.println("\u274C Client-" + clientID + " answered incorrectly.");
+            System.out.println("❌ Client-" + clientID + " answered incorrectly.");
         }
 
         try {
@@ -108,10 +108,11 @@ public class ClientThread implements Runnable {
     @Override
     public void run() {
         try {
+            //  Add this at the top!
             if (joinedMidGame) {
-                sendMessage("Please wait for the next question to join in.");
-                int waitForIndex = TriviaServer.getCurrentQuestionIndex();
-                while (TriviaServer.getCurrentQuestionIndex() == waitForIndex) {
+                sendMessage("WaitForNextRound");
+                int waitAt = TriviaServer.getCurrentQuestionIndex();
+                while (TriviaServer.getCurrentQuestionIndex() == waitAt) {
                     Thread.sleep(500);
                 }
                 joinedMidGame = false;
@@ -119,7 +120,7 @@ public class ClientThread implements Runnable {
 
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("\uD83D\uDCE5 From Client-" + clientID + ": " + message);
+                System.out.println("📥 From Client-" + clientID + ": " + message);
 
                 if (message.startsWith("Score")) {
                     int penalty = Integer.parseInt(message.substring("Score".length()).trim());
@@ -133,7 +134,7 @@ public class ClientThread implements Runnable {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            System.out.println("\u26A0 Client-" + clientID + " disconnected.");
+            System.out.println("⚠ Client-" + clientID + " disconnected.");
             try {
                 TriviaServer.removeClient(this);
                 close();
