@@ -184,7 +184,7 @@ public class ClientWindow implements ActionListener {
             byte[] buffer = "buzz".getBytes();
             DatagramSocket udpSocket = new DatagramSocket();
             InetAddress serverAddress = socket.getInetAddress();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, 1234);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, 1235);
             udpSocket.send(packet);
             udpSocket.close();
         } catch (IOException e) {

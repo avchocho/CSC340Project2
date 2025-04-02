@@ -5,6 +5,7 @@ import java.util.concurrent.*;
 
 public class TriviaServer {
     private static final int PORT = 1234;
+    private static final int UDPport = 1235;
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
     private static final Queue<String> messageQueue = new ConcurrentLinkedQueue<>();
@@ -148,7 +149,7 @@ public class TriviaServer {
         private final byte[] buffer = new byte[256];
 
         public UDPThread() throws SocketException {
-            socket = new DatagramSocket(PORT);
+            socket = new DatagramSocket(UDPport);
         }
 
         public void run() {
