@@ -3,21 +3,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
-import java.security.SecureRandom;
-import java.util.TimerTask;
 import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
-	private int userScore = 0;
-    private JButton poll;
-    private JButton submit;
+    private int userScore = 0;
+    private JButton poll, submit;
     private JRadioButton[] options;
     private ButtonGroup optionGroup;
-    private JLabel question;
-    private JLabel timer;
-    private JLabel score;
-    private JLabel gameMessage;
+    private JLabel question, timer, score, gameMessage;
     private TimerTask clock;
     private JFrame window;
 
@@ -28,33 +23,37 @@ public class ClientWindow implements ActionListener {
 
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
+        window.setSize(400, 400);
+        window.setLayout(null);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setResizable(false);
+
         question = new JLabel("Waiting for question...");
-        window.add(question);
         question.setBounds(10, 5, 350, 100);
+        window.add(question);
 
         options = new JRadioButton[4];
         optionGroup = new ButtonGroup();
         for (int i = 0; i < 4; i++) {
             options[i] = new JRadioButton("Option " + (i + 1));
+            options[i].setBounds(10, 110 + i * 20, 350, 20);
             options[i].addActionListener(this);
-            options[i].setBounds(10, 110 + (i * 20), 350, 20);
             options[i].setEnabled(false);
-            window.add(options[i]);
             optionGroup.add(options[i]);
+            window.add(options[i]);
         }
-
-        timer = new JLabel("TIMER");
-        timer.setBounds(250, 250, 100, 20);
-        window.add(timer);
 
         score = new JLabel("Score: " + userScore);
         score.setBounds(50, 250, 100, 20);
         window.add(score);
-        
-        gameMessage = new JLabel(""); 
-        gameMessage.setBounds(10, 220, 350, 20); 
-        window.add(gameMessage);
 
+        timer = new JLabel("Timer");
+        timer.setBounds(250, 250, 100, 20);
+        window.add(timer);
+
+        gameMessage = new JLabel("");
+        gameMessage.setBounds(10, 220, 350, 20);
+        window.add(gameMessage);
 
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
@@ -68,11 +67,7 @@ public class ClientWindow implements ActionListener {
         submit.setEnabled(false);
         window.add(submit);
 
-        window.setSize(400, 400);
-        window.setLayout(null);
         window.setVisible(true);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setResizable(false);
 
         try {
             socket = new Socket(serverIP, port);
@@ -81,7 +76,6 @@ public class ClientWindow implements ActionListener {
             new Thread(this::listenToServer).start();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Could not connect to server.");
-            e.printStackTrace();
         }
     }
 
@@ -90,33 +84,27 @@ public class ClientWindow implements ActionListener {
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("Question")) {
-                    StringBuilder fullQuestion = new StringBuilder();
-                    fullQuestion.append(line).append("\n");
+                    StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
-                        if (nextLine == null) break;
-                        fullQuestion.append(nextLine).append("\n");
+                        if (nextLine != null) fullQuestion.append(nextLine).append("\n");
                     }
                     displayQuestion(fullQuestion.toString());
                 } else if (line.startsWith("Your Answer")) {
-                    poll.setEnabled(true); // Poll opens
+                    SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
-                        for (JRadioButton option : options) {
-                            option.setEnabled(true);
-                        }
+                        for (JRadioButton option : options) option.setEnabled(true);
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
                         submit.setEnabled(false);
-                        for (JRadioButton option : options) {
-                            option.setEnabled(false);
-                        }
+                        for (JRadioButton option : options) option.setEnabled(false);
                     });
                 } else if (line.startsWith("Time")) {
                     String[] parts = line.split(" ");
@@ -124,42 +112,41 @@ public class ClientWindow implements ActionListener {
                         try {
                             int duration = Integer.parseInt(parts[1]);
                             restartTimer(duration);
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid time format from server: " + line);
-                        }
+                        } catch (NumberFormatException ignored) {}
                     }
-                } else if(line.toLowerCase().startsWith("correct")) {
-                	gameMessage.setText("Correct answer! +10 points");
-                	userScore += 10;
-                	SwingUtilities.invokeLater(() -> {
-                        score.setText("Score: " + userScore);
-                    });
-                } else if(line.toLowerCase().startsWith("wrong")) {
-                	gameMessage.setText("Wrong answer! -10 points");
-                	userScore -= 10;
-                	SwingUtilities.invokeLater(() -> {
-                        score.setText("Score: " + userScore);
-                    });
-                } else if (line.startsWith("Game Over")) {
-                    JOptionPane.showMessageDialog(null, line);
-                    poll.setEnabled(false);
-                    submit.setEnabled(false);
+                } else if (line.toLowerCase().startsWith("correct")) {
+                    userScore += 10;
+                    updateGameMessage("Correct answer! +10 points", Color.GREEN);
+                } else if (line.toLowerCase().startsWith("wrong")) {
+                    userScore -= 10;
+                    updateGameMessage("Wrong answer! -10 points", Color.RED);
                 } else if (line.contains("WaitForNextRound")) {
-                    SwingUtilities.invokeLater(() -> {
-                        gameMessage.setForeground(Color.BLUE);
-                        gameMessage.setText("You've joined mid-game. Wait for the next question.");
-                        poll.setEnabled(false);
-                        submit.setEnabled(false);
-                        for (JRadioButton option : options) {
-                            option.setEnabled(false);
-                        }
-                    });
+                    updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
+                    disableControls();
+                } else if (line.toLowerCase().startsWith("game over")) {
+                    JOptionPane.showMessageDialog(null, line);
+                    disableControls();
                 }
-               
             }
         } catch (IOException e) {
             System.out.println("Disconnected from server.");
         }
+    }
+
+    private void updateGameMessage(String msg, Color color) {
+        SwingUtilities.invokeLater(() -> {
+            gameMessage.setForeground(color);
+            gameMessage.setText(msg);
+            score.setText("Score: " + userScore);
+        });
+    }
+
+    private void disableControls() {
+        SwingUtilities.invokeLater(() -> {
+            poll.setEnabled(false);
+            submit.setEnabled(false);
+            for (JRadioButton option : options) option.setEnabled(false);
+        });
     }
 
     private void displayQuestion(String fullText) {
@@ -168,7 +155,7 @@ public class ClientWindow implements ActionListener {
             if (lines.length < 6) return;
             question.setText("<html><b>" + lines[0] + "</b><br>" + lines[1] + "</html>");
             for (int i = 0; i < 4; i++) {
-                options[i].setText("<html>" + lines[i + 2] + "</html>");
+                options[i].setText(lines[i + 2]);
                 options[i].setEnabled(false);
                 options[i].setSelected(false);
             }
@@ -188,23 +175,20 @@ public class ClientWindow implements ActionListener {
             udpSocket.send(packet);
             udpSocket.close();
         } catch (IOException e) {
-            System.out.println("Failed to send UDP poll.");
-            e.printStackTrace();
+            System.out.println("UDP Buzz failed");
         }
     }
 
     private void restartTimer(int duration) {
         if (clock != null) clock.cancel();
         clock = new TimerCode(duration);
-        Timer t = new Timer();
-        t.schedule(clock, 0, 1000);
+        new Timer().schedule(clock, 0, 1000);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Object source = e.getSource();
-
-        if (source instanceof JRadioButton) {
+        Object src = e.getSource();
+        if (src instanceof JRadioButton) {
             for (int i = 0; i < options.length; i++) {
                 if (options[i].isSelected()) {
                     selectedAnswer = String.valueOf((char) ('A' + i));
@@ -213,21 +197,19 @@ public class ClientWindow implements ActionListener {
             }
         }
 
-        if (source == submit) {
+        if (src == poll) {
+            sendUDPBuzz();
+            poll.setEnabled(false);
+        }
+
+        if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
                 submit.setEnabled(false);
-                for (JRadioButton option : options) {
-                    option.setEnabled(false);
-                }
+                for (JRadioButton option : options) option.setEnabled(false);
             } else {
-                JOptionPane.showMessageDialog(null, "Please select an answer first.");
+                JOptionPane.showMessageDialog(null, "Please select an answer.");
             }
-        }
-
-        if (source == poll) {
-            sendUDPBuzz();
-            poll.setEnabled(false);
         }
     }
 
@@ -242,19 +224,15 @@ public class ClientWindow implements ActionListener {
         public void run() {
             if (duration < 0) {
                 timer.setText("Timer expired");
+                out.println("Expired");
                 submit.setEnabled(false);
-                for (JRadioButton option : options) {
-                    option.setEnabled(false);
-                }
-                out.println("Expired");  // Let server know time expired
+                for (JRadioButton option : options) option.setEnabled(false);
                 this.cancel();
                 return;
             }
-
-            timer.setForeground(duration < 6 ? Color.red : Color.black);
-            timer.setText(duration + "");
+            timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
+            timer.setText(String.valueOf(duration));
             duration--;
-            window.repaint();
         }
     }
-} 
+}
