@@ -1,24 +1,111 @@
 import java.io.*;
 import java.net.*;
 
-public class ClientThread implements Runnable, Comparable<ClientThread> {
+public class ClientThread implements Runnable {
     private final Socket socket;
-    private final BufferedReader in;
-    private final PrintWriter out;
-    private String correctAnswer;
-    private int score = 0;
-    private boolean canAnswer = false;
-    private boolean joinedMidGame = false;
     private final int clientID;
+    private BufferedReader in;
+    private PrintWriter out;
+    private String correctAnswer;
+    private int score;
+    private boolean canAnswer;
+    private boolean joinedMidGame = false;
 
-    public ClientThread(Socket socket, int id) throws IOException {
+    public ClientThread(Socket socket, int id) {
         this.socket = socket;
         this.clientID = id;
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        this.out = new PrintWriter(socket.getOutputStream(), true);
-        sendMessage("score " + score);
+        this.score = 0;
+        this.canAnswer = false;
+
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            sendMessage("Welcome Client-" + clientID);
+            sendMessage("score " + score);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+    public int getClientID() {
+        return clientID;
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setCorrectAnswer(char correctAnswer) {
+        this.correctAnswer = String.valueOf(correctAnswer).toUpperCase();
+    }
+
+    public void setCanAnswer(boolean canAnswer) {
+        this.canAnswer = canAnswer;
+    }
+
+    public boolean getCanAnswer() {
+        return canAnswer;
+    }
+
+    public void increaseScore(int points) {
+        score += points;
+    }
+
+    public void decreaseScore(int points) {
+        score -= points;
+    }
+
+    public void sendMessage(String message) {
+        out.println(message);
+    }
+
+    public void setJoinedMidGame(boolean joined) {
+        this.joinedMidGame = joined;
+    }
+
+    public boolean hasJoinedMidGame() {
+        return joinedMidGame;
+    }
+
+    public void close() {
+        try {
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (socket != null) socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void checkAnswer(String answer) {
+        if (!canAnswer) {
+            sendMessage("You are not allowed to answer.");
+            return;
+        }
+
+        String trimmed = answer.trim().toUpperCase();
+        if (trimmed.equals(correctAnswer)) {
+            increaseScore(10);
+            sendMessage("correct " + score);
+            System.out.println("✅ Client-" + clientID + " answered correctly.");
+        } else {
+            decreaseScore(10);
+            sendMessage("wrong " + score);
+            System.out.println("❌ Client-" + clientID + " answered incorrectly.");
+        }
+
+        try {
+            TriviaServer.moveAllToNextQuestion();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void run() {
         try {
             if (joinedMidGame) {
@@ -32,20 +119,15 @@ public class ClientThread implements Runnable, Comparable<ClientThread> {
 
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("📥 From Client-" + clientID + ": " + message);
+                System.out.println("📥 Client-" + clientID + ": " + message);
 
                 if (message.equalsIgnoreCase("Expired")) {
                     TriviaServer.clientOutOfTime(this);
-                } else if (message.toLowerCase().startsWith("score")) {
-                    int penalty = Integer.parseInt(message.substring(5).trim());
-                    score -= penalty;
-                    sendMessage("score " + score);
-                    TriviaServer.moveAllToNextQuestion();
                 } else {
-                    checkAnswer(message.trim().toUpperCase());
+                    checkAnswer(message);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             System.out.println("⚠ Client-" + clientID + " disconnected.");
             try {
                 TriviaServer.removeClient(this);
@@ -54,79 +136,5 @@ public class ClientThread implements Runnable, Comparable<ClientThread> {
                 ex.printStackTrace();
             }
         }
-    }
-
-    private void checkAnswer(String answer) {
-        if (!canAnswer) {
-            sendMessage("You are not allowed to answer.");
-            return;
-        }
-
-        if (answer.equals(correctAnswer)) {
-            score += 10;
-            sendMessage("correct " + score);
-            System.out.println("✅ Client-" + clientID + " answered correctly.");
-        } else {
-            score -= 10;
-            sendMessage("wrong " + score);
-            System.out.println("❌ Client-" + clientID + " answered incorrectly.");
-        }
-
-        try {
-            TriviaServer.moveAllToNextQuestion();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setCorrectAnswer(String correctAnswer) {
-        this.correctAnswer = correctAnswer.trim().toUpperCase();
-    }
-
-    public void setCanAnswer(boolean canAnswer) {
-        this.canAnswer = canAnswer;
-    }
-
-    public boolean getCanAnswer() {
-        return canAnswer;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public void decreaseScore(int points) {
-        this.score -= points;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public int getClientID() {
-        return clientID;
-    }
-
-    public void sendMessage(String msg) {
-        out.println(msg);
-    }
-
-    public void setJoinedMidGame(boolean joined) {
-        this.joinedMidGame = joined;
-    }
-
-    public boolean hasJoinedMidGame() {
-        return joinedMidGame;
-    }
-
-    public void close() throws IOException {
-        in.close();
-        out.close();
-        socket.close();
-    }
-
-    @Override
-    public int compareTo(ClientThread other) {
-        return Integer.compare(other.score, this.score); // descending
     }
 }
