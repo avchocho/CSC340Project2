@@ -42,6 +42,9 @@ public class TriviaServer {
                         }
                         pool.execute(client);
                         System.out.println("Client-" + client.getClientID() + " connected.");
+                    } catch (SocketException se) {
+                        System.out.println("🛑 Server socket closed. No longer accepting clients.");
+                        break;
                     } catch (IOException e) {
                         e.printStackTrace();
                         break;
