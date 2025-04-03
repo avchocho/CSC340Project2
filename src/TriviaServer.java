@@ -113,22 +113,56 @@ public class TriviaServer {
         moveAllToNextQuestion();
     }
 
+//    private static void startRoundTimer() {
+//        if (roundTimer != null) roundTimer.cancel();
+//
+//        roundTimer = new Timer();
+//        roundTimer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("⏱ No buzz received. Skipping to next question.");
+//                try {
+//                    moveAllToNextQuestion();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }, 15000); // wait 15 seconds max
+//    }
+    
+    
     private static void startRoundTimer() {
         if (roundTimer != null) roundTimer.cancel();
 
         roundTimer = new Timer();
-        roundTimer.schedule(new TimerTask() {
+        final int[] timeLeft = {15}; // 15 seconds for buzz
+
+        roundTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("⏱ No buzz received. Skipping to next question.");
-                try {
-                    moveAllToNextQuestion();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (timeLeft[0] >= 0) {
+                    broadcastToAllClients("Timer " + timeLeft[0]);
+                    timeLeft[0]--;
+                } else {
+                    System.out.println("⏱ No buzz received. Skipping to next question.");
+                    roundTimer.cancel();
+                    try {
+                        moveAllToNextQuestion();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-        }, 15000); // wait 15 seconds max
+        }, 0, 1000); // every 1 second
     }
+
+    private static void broadcastToAllClients(String msg) {
+        for (ClientThread client : clients) {
+            client.sendMessage(msg);
+        }
+    }
+
+    
 
     private static void endGame() throws IOException {
         if (hasPrintedWinners) return;
