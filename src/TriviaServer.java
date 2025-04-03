@@ -4,8 +4,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class TriviaServer {
-    private static final int TCP_PORT = 1234;
-    private static final int UDP_PORT = 1235;
+    private static final int TCP_PORT = 2468;
+    private static final int UDP_PORT = 1357;
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
@@ -113,56 +113,22 @@ public class TriviaServer {
         moveAllToNextQuestion();
     }
 
-//    private static void startRoundTimer() {
-//        if (roundTimer != null) roundTimer.cancel();
-//
-//        roundTimer = new Timer();
-//        roundTimer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println("⏱ No buzz received. Skipping to next question.");
-//                try {
-//                    moveAllToNextQuestion();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }, 15000); // wait 15 seconds max
-//    }
-    
-    
     private static void startRoundTimer() {
         if (roundTimer != null) roundTimer.cancel();
 
         roundTimer = new Timer();
-        final int[] timeLeft = {15}; // 15 seconds for buzz
-
-        roundTimer.scheduleAtFixedRate(new TimerTask() {
+        roundTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (timeLeft[0] >= 0) {
-                    broadcastToAllClients("Timer " + timeLeft[0]);
-                    timeLeft[0]--;
-                } else {
-                    System.out.println("⏱ No buzz received. Skipping to next question.");
-                    roundTimer.cancel();
-                    try {
-                        moveAllToNextQuestion();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                System.out.println("⏱ No buzz received. Skipping to next question.");
+                try {
+                    moveAllToNextQuestion();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        }, 0, 1000); // every 1 second
+        }, 15000); // wait 15 seconds max
     }
-
-    private static void broadcastToAllClients(String msg) {
-        for (ClientThread client : clients) {
-            client.sendMessage(msg);
-        }
-    }
-
-    
 
     private static void endGame() throws IOException {
         if (hasPrintedWinners) return;
