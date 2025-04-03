@@ -92,14 +92,16 @@ public class ClientWindow implements ActionListener {
                     displayQuestion(fullQuestion.toString());
                 } else if (line.startsWith("Your Answer")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
-                } else if (line.startsWith("ACK")) {
+                } 
+                else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
                     });
-                } else if (line.startsWith("NAK")) {
+                } 
+                else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
@@ -202,8 +204,18 @@ public class ClientWindow implements ActionListener {
             poll.setEnabled(false);
         }
 
+//        if (src == submit) {
+//            if (!selectedAnswer.isEmpty()) {
+//                out.println(selectedAnswer);
+//                submit.setEnabled(false);
+//                for (JRadioButton option : options) option.setEnabled(false);
+//            } else {
+//                JOptionPane.showMessageDialog(null, "Please select an answer.");
+//            }
+//        }
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
+                restartTimer(10); // ⬅️ Start timer when submit is clicked
                 out.println(selectedAnswer);
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
@@ -211,6 +223,9 @@ public class ClientWindow implements ActionListener {
                 JOptionPane.showMessageDialog(null, "Please select an answer.");
             }
         }
+
+
+        
     }
 
     public class TimerCode extends TimerTask {

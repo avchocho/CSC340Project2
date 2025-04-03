@@ -177,7 +177,7 @@ public class TriviaServer {
                         if (winner != null) {
                             winner.setCanAnswer(true);
                             winner.sendMessage("ACK — You may answer!");
-                            winner.sendMessage("Time 10");
+//                            winner.sendMessage("Time 10");
                         } else {
                             System.out.println("⚠ No client matched for UDP address " + address);
                         }
