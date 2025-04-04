@@ -119,6 +119,8 @@ public class ClientThread implements Runnable {
                 }
                 joinedMidGame = false;
             }
+            System.out.println("Client-" + clientID + " message loop ended (readLine returned null).");
+
 
             String message;
             while ((message = in.readLine()) != null) {
