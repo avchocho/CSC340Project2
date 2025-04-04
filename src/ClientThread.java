@@ -134,7 +134,7 @@ public class ClientThread implements Runnable {
             // 🟡 Graceful exit: readLine() returned null (client quit)
             System.out.println("Client-" + clientID + " readLine() returned null.");
             TriviaServer.removeClient(this);
-            close();
+            //close();
 
         } catch (IOException | InterruptedException e) {
             System.out.println("Client-" + clientID + " disconnected (exception).");
