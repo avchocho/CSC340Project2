@@ -117,7 +117,7 @@ public class ClientWindow implements ActionListener {
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
                     updateGameMessage("Wrong answer! -10 points", Color.RED);
-                } else if (line.toLowerCase().startsWith("noanswerpenalty")) {
+                } else if (line.toLowerCase().startsWith("time")) {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);
                 } else if (line.contains("WaitForNextRound")) {
