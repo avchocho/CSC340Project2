@@ -8,7 +8,7 @@ public class TriviaServer {
     private static final int UDP_PORT = 1235;
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
-    private static final List<ClientThread> buzzOrder = new ArrayList<>();
+    public static final Queue<ClientThread> buzzQueue = new LinkedList<>();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
 
     private static int currentQuestionIndex = 0;
@@ -63,17 +63,17 @@ public class TriviaServer {
     }
 
     public static void sendNextQuestionToAll() throws IOException {
-    	buzzOrder.clear();
         if (currentQuestionIndex >= questions.size()) {
             endGame();
             return;
         }
 
         receivingBuzzes = true;
+        buzzQueue.clear(); // reset buzz queue for the round
+
         Question q = questions.get(currentQuestionIndex);
         System.out.println("\n❓ " + q.getQuestionNumber() + ": " + q.getQuestionText());
 
-        // Send question and options to all clients
         for (ClientThread client : clients) {
             client.setCanAnswer(false);
             client.setCorrectAnswer(String.valueOf(q.getCorrectAnswer()));
@@ -89,24 +89,27 @@ public class TriviaServer {
 
         currentQuestionIndex++;
 
-     // 🕓 Start 15-second poll timer
+        // 🕓 Start 15-second poll timer
         startTimer(15, () -> {
             receivingBuzzes = false;
 
-            if (!buzzOrder.isEmpty()) {
-                ClientThread winner = buzzOrder.get(0);
+            if (!buzzQueue.isEmpty()) {
+                ClientThread winner;
+                synchronized (buzzQueue) {
+                    winner = buzzQueue.poll(); // get first buzzer
+                }
+
                 winner.setCanAnswer(true);
                 winner.sendMessage("ACK");
                 System.out.println("🎯 Client-" + winner.getClientID() + " buzzed first and may answer.");
 
-                // NAK all other clients
                 for (ClientThread client : clients) {
                     if (client != winner) {
                         client.sendMessage("NAK");
                     }
                 }
 
-                // Start 10s answer timer
+                // ⏱️ Start 10-second answer timer
                 startTimer(10, () -> {
                     try {
                         clientOutOfTime(winner);
@@ -114,6 +117,7 @@ public class TriviaServer {
                         e.printStackTrace();
                     }
                 });
+
             } else {
                 System.out.println("⏱️ No one buzzed in. Skipping to next question.");
                 for (ClientThread client : clients) {
@@ -127,8 +131,8 @@ public class TriviaServer {
                 }
             }
         });
-
     }
+
 
 
     private static void endGame() throws IOException {
@@ -167,27 +171,34 @@ public class TriviaServer {
                 while (true) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
-                    String message = new String(packet.getData(), 0, packet.getLength());
+                    String message = new String(packet.getData(), 0, packet.getLength()).trim();
                     InetAddress address = packet.getAddress();
 
-                    if (message.equalsIgnoreCase("buzz") && receivingBuzzes) {
+                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
                         ClientThread client = findClientByAddress(address);
-                        if (client != null && !buzzOrder.contains(client)) {
-                            buzzOrder.add(client);
-                            System.out.println("Buzz received from Client-" + client.getClientID());
+                        if (client != null) {
+                            synchronized (TriviaServer.buzzQueue) {
+                                if (!TriviaServer.buzzQueue.contains(client)) {
+                                    TriviaServer.buzzQueue.offer(client);
+                                    System.out.println("✅ Client-" + client.getClientID() + " buzzed.");
+                                }
+                            }
+                        } else {
+                            System.out.println("⚠️ No matching client found for UDP address: " + address);
                         }
                     }
                 }
             } catch (IOException e) {
-                System.out.println("UDP Thread error");
+                System.out.println("❌ UDP Thread error: " + e.getMessage());
             }
         }
-    
 
         private ClientThread findClientByAddress(InetAddress address) {
-            for (ClientThread client : clients) {
-                if (client.getSocket().getInetAddress().equals(address)) {
-                    return client;
+            synchronized (clients) {
+                for (ClientThread client : clients) {
+                    if (client.getSocket().getInetAddress().equals(address)) {
+                        return client;
+                    }
                 }
             }
             return null;
