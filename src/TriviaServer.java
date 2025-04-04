@@ -147,12 +147,20 @@ public class TriviaServer {
             System.out.println("Client " + client.getClientID() + ": " + client.getScore());
             removeClient(client);  // this calls close() which prints disconnect
         }
+        //shutting down server after game ends
+        if(serverSocket != null && !serverSocket.isClosed()) {
+        	serverSocket.close(); //stop accepting new clients
+        }
+        
+        pool.shutdown();//stop all running client threads
+        System.out.println("Server shutting down");
+        System.exit(0);
 
-        // 🔐 Clean shutdown
-        serverSocket.close();       // ❗force accept() to fail
-        pool.shutdownNow();         // stop all client threads
-        System.out.println("🛑 Server shutting down.");
-        System.exit(0);             // end process
+//        //  shutdown after all clients leave at end of game - will change
+//        serverSocket.close();       
+//        pool.shutdownNow();         // stop all client threads
+//        System.out.println("Server shutting down.");
+//        System.exit(0);             // end process
     }
 
     private static void loadQuestions() {
@@ -246,6 +254,14 @@ public class TriviaServer {
         clients.remove(client);
         System.out.println("Removing Client-" + client.getClientID());
         client.close();
+        
+        if(clients.isEmpty()) {
+        	System.out.println("All clients disconnected. Shutting down server...");
+        	serverSocket.close();
+        	pool.shutdownNow();
+        	System.out.println("Server shutting down");
+        	System.exit(0);
+        }
     }
 
     public static int getCurrentQuestionIndex() {
