@@ -123,6 +123,11 @@ public class ClientWindow implements ActionListener {
                 } else if (line.toLowerCase().startsWith("game over")) {
                     JOptionPane.showMessageDialog(null, line);
                     disableControls();
+                } else if (line.equalsIgnoreCase("KILLSWITCH")) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null, "You have been removed from the game.");
+                        System.exit(0);
+                    });
                 }
             }
         } catch (IOException e) {

@@ -24,8 +24,30 @@ public class TriviaServer {
         try {
             serverSocket = new ServerSocket(TCP_PORT);
             System.out.println("Trivia Server started on port " + TCP_PORT);
-
+            
             new UDPBuzzThread().start();
+            //start admin input thread 
+//            new Thread(() -> {
+//                Scanner scanner = new Scanner(System.in);
+//                while (true) {
+//                    String command = scanner.nextLine();
+//                    if (command.startsWith("kick ")) {
+//                        try {
+//                            int id = Integer.parseInt(command.split(" ")[1]);
+//                            for (ClientThread client : new ArrayList<>(clients)) {
+//                                if (client.getClientID() == id) {
+//                                    client.sendMessage("KILLSWITCH");
+//                                    removeClient(client);
+//                                    System.out.println("Client-" + id + " was kicked by admin.");
+//                                    break;
+//                                }
+//                            }
+//                        } catch (Exception e) {
+//                            System.out.println("Invalid kick command.");
+//                        }
+//                    }
+//                }
+//            }).start();
 
             new Thread(() -> {
                 while (true) {
@@ -270,7 +292,16 @@ public class TriviaServer {
 
     public static void clientOutOfTime(ClientThread client) throws IOException {
         client.sendMessage("Time expired");
-        sendNextQuestionToAll();
+        //sendNextQuestionToAll();
+        client.incrementUnanswered();
+        
+        if(client.getUnansweredCount() >= 2) {
+        	System.out.println("Client-" + client.getClientID() + " terminated (missed 2 questions in a row)");
+        	client.sendMessage("killswitch");
+        	removeClient(client);
+        } else {
+        	sendNextQuestionToAll();
+        }
     }
 
     public static void handleSubmission() {

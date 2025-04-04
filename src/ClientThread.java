@@ -10,6 +10,7 @@ public class ClientThread implements Runnable {
     private int score;
     private boolean canAnswer;
     private boolean joinedMidGame = false;
+    private int unansweredCount = 0;
 
     public ClientThread(Socket socket, int id) {
         this.socket = socket;
@@ -70,7 +71,18 @@ public class ClientThread implements Runnable {
     public boolean hasJoinedMidGame() {
         return joinedMidGame;
     }
+    
+    public int getUnansweredCount() {
+    	return unansweredCount;
+    }
 
+    public void incrementUnanswered() {
+    	unansweredCount++;
+    }
+    
+    public void resetUnansweredCount() {
+    	unansweredCount = 0;
+    }
     public void close() {
         try {
             if (in != null) in.close();
@@ -89,6 +101,8 @@ public class ClientThread implements Runnable {
         }
 
         String trimmed = answer.trim().toUpperCase();
+        resetUnansweredCount();//reset missed question count since the player responded
+        
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
@@ -146,4 +160,6 @@ public class ClientThread implements Runnable {
             }
         }
     }
+
+	
 }
