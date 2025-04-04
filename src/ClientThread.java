@@ -39,8 +39,8 @@ public class ClientThread implements Runnable {
         return score;
     }
 
-    public void setCorrectAnswer(char correctAnswer) {
-        this.correctAnswer = String.valueOf(correctAnswer).toUpperCase();
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer.toUpperCase();
     }
 
     public void setCanAnswer(boolean canAnswer) {
@@ -97,6 +97,8 @@ public class ClientThread implements Runnable {
             sendMessage("wrong " + score);
             System.out.println("❌ Client-" + clientID + " answered incorrectly.");
         }
+
+        canAnswer = false;
 
         try {
             TriviaServer.moveAllToNextQuestion();

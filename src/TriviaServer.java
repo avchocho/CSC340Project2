@@ -9,12 +9,10 @@ public class TriviaServer {
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
-    private static final Queue<String> buzzQueue = new ConcurrentLinkedQueue<>();
 
     private static int currentQuestionIndex = 0;
     private static boolean receivingBuzzes = true;
     private static boolean hasPrintedWinners = false;
-    private static Timer roundTimer;
     private static ServerSocket serverSocket;
 
     public static void main(String[] args) {
@@ -26,7 +24,6 @@ public class TriviaServer {
 
             new UDPBuzzThread().start();
 
-            // Accept clients in background forever
             new Thread(() -> {
                 while (true) {
                     try {
@@ -41,16 +38,16 @@ public class TriviaServer {
                         synchronized (clients) {
                             clients.add(client);
                         }
+
                         pool.execute(client);
                         System.out.println("Client-" + client.getClientID() + " connected.");
                     } catch (IOException e) {
-                        System.out.println("🔌 ServerSocket closed or error: " + e.getMessage());
+                        System.out.println("🔌 ServerSocket error: " + e.getMessage());
                         break;
                     }
                 }
             }).start();
 
-            // Wait until at least 2 players join
             while (clients.size() < 2) {
                 Thread.sleep(500);
             }
@@ -70,13 +67,12 @@ public class TriviaServer {
         }
 
         receivingBuzzes = true;
-        buzzQueue.clear();
         Question q = questions.get(currentQuestionIndex);
         System.out.println("\n❓ " + q.getQuestionNumber() + ": " + q.getQuestionText());
 
         for (ClientThread client : clients) {
             client.setCanAnswer(false);
-            client.setCorrectAnswer(q.getCorrectAnswer());
+            client.setCorrectAnswer(String.valueOf(q.getCorrectAnswer()));
             client.sendMessage(q.getQuestionNumber() + ":");
             client.sendMessage(q.getQuestionText());
             client.sendMessage("A. " + q.getOptions()[0]);
@@ -86,48 +82,7 @@ public class TriviaServer {
             client.sendMessage("Your Answer:");
         }
 
-        startRoundTimer();
         currentQuestionIndex++;
-    }
-
-    public static void moveAllToNextQuestion() throws IOException {
-        if (roundTimer != null) roundTimer.cancel();
-        sendNextQuestionToAll();
-    }
-
-    public static synchronized void removeClient(ClientThread client) throws IOException {
-        clients.remove(client);
-        client.close();
-    }
-
-    public static int getCurrentQuestionIndex() {
-        return currentQuestionIndex;
-    }
-
-    public static void clientOutOfTime(ClientThread client) throws IOException {
-        System.out.println("⏰ Client-" + client.getClientID() + " ran out of time!");
-        client.sendMessage("Time's up! -20 points.");
-        client.setCanAnswer(false);
-        client.decreaseScore(20);
-        client.sendMessage("score " + client.getScore());
-        moveAllToNextQuestion();
-    }
-
-    private static void startRoundTimer() {
-        if (roundTimer != null) roundTimer.cancel();
-
-        roundTimer = new Timer();
-        roundTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("⏱ No buzz received. Skipping to next question.");
-                try {
-                    moveAllToNextQuestion();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 15000); // wait 15 seconds max
     }
 
     private static void endGame() throws IOException {
@@ -168,24 +123,21 @@ public class TriviaServer {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
                     String message = new String(packet.getData(), 0, packet.getLength());
+                    InetAddress address = packet.getAddress();
 
-                    if (message.startsWith("buzz:")) {
-                        int clientPort = Integer.parseInt(message.split(":")[1].trim());
-
-                        if (receivingBuzzes) {
-                            receivingBuzzes = false;
-                            ClientThread winner = findClientByPort(clientPort);
-                            if (winner != null) {
-                                winner.setCanAnswer(true);
-                                winner.sendMessage("ACK — You may answer!");
-                            } else {
-                                System.out.println("⚠ No client matched for port: " + clientPort);
-                            }
+                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
+                        receivingBuzzes = false;
+                        ClientThread winner = findClientByAddress(address);
+                        if (winner != null) {
+                            winner.setCanAnswer(true);
+                            winner.sendMessage("ACK");
                         } else {
-                            ClientThread loser = findClientByPort(clientPort);
-                            if (loser != null) {
-                                loser.sendMessage("NAK — Too late!");
-                            }
+                            System.out.println("⚠ No client matched for UDP address " + address);
+                        }
+                    } else {
+                        ClientThread loser = findClientByAddress(address);
+                        if (loser != null) {
+                            loser.sendMessage("NAK");
                         }
                     }
                 }
@@ -194,13 +146,31 @@ public class TriviaServer {
             }
         }
 
-        private ClientThread findClientByPort(int port) {
+        private ClientThread findClientByAddress(InetAddress address) {
             for (ClientThread client : clients) {
-                if (client.getSocket().getLocalPort() == port) {
+                if (client.getSocket().getInetAddress().equals(address)) {
                     return client;
                 }
             }
             return null;
         }
+    }
+
+    public static void removeClient(ClientThread client) throws IOException {
+        clients.remove(client);
+        client.close();
+    }
+
+    public static int getCurrentQuestionIndex() {
+        return currentQuestionIndex;
+    }
+
+    public static void clientOutOfTime(ClientThread client) throws IOException {
+        client.sendMessage("Time expired");
+        sendNextQuestionToAll();
+    }
+
+    public static void moveAllToNextQuestion() throws IOException {
+        sendNextQuestionToAll();
     }
 }
