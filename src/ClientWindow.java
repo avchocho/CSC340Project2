@@ -20,7 +20,8 @@ public class ClientWindow implements ActionListener {
     private PrintWriter out;
     private String selectedAnswer = "";
 
-    private Timer currentTimer = new Timer(); // Shared timer controller
+    private Timer postSubmitTimer = new Timer(); // used for 5s timer
+    private boolean isInPostSubmitDelay = false;
 
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
@@ -99,14 +100,7 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
-
-                        // Start 10-second answer timer
-                        startCountdown(10, () -> {
-                            timer.setText("Timer expired");
-                            out.println("Expired");
-                            submit.setEnabled(false);
-                            for (JRadioButton option : options) option.setEnabled(false);
-                        });
+                        isInPostSubmitDelay = false; // make sure syncing resumes
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
@@ -115,6 +109,15 @@ public class ClientWindow implements ActionListener {
                         submit.setEnabled(false);
                         for (JRadioButton option : options) option.setEnabled(false);
                     });
+                } else if (line.startsWith("TIMER:")) {
+                    String time = line.split(":")[1];
+                    if (!isInPostSubmitDelay) {
+                        SwingUtilities.invokeLater(() -> {
+                            int seconds = Integer.parseInt(time);
+                            timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
+                            timer.setText("Time: " + seconds);
+                        });
+                    }
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
                     updateGameMessage("Correct answer! +10 points", Color.GREEN);
@@ -164,6 +167,7 @@ public class ClientWindow implements ActionListener {
             selectedAnswer = "";
             poll.setEnabled(true);
             submit.setEnabled(false);
+            isInPostSubmitDelay = false;
         });
     }
 
@@ -178,30 +182,6 @@ public class ClientWindow implements ActionListener {
         } catch (IOException e) {
             System.out.println("UDP Buzz failed");
         }
-    }
-
-    private void startCountdown(int seconds, Runnable onExpire) {
-        currentTimer.cancel();              // Stop any existing timer
-        currentTimer = new Timer();         // Replace with new one
-
-        currentTimer.scheduleAtFixedRate(new TimerTask() {
-            int timeLeft = seconds;
-
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(() -> {
-                    if (timeLeft <= 0) {
-                        timer.setText("Timer expired");
-                        onExpire.run();
-                        cancel();
-                    } else {
-                        timer.setForeground(timeLeft < 6 ? Color.RED : Color.BLACK);
-                        timer.setText("Time: " + timeLeft);
-                        timeLeft--;
-                    }
-                });
-            }
-        }, 0, 1000);
     }
 
     @Override
@@ -227,11 +207,30 @@ public class ClientWindow implements ActionListener {
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
 
-                // Start 5-second post-submit timer
-                startCountdown(5, () -> {
-                    timer.setText("You may poll again.");
-                    poll.setEnabled(true);
-                });
+                // Begin 5-second post-submit delay
+                isInPostSubmitDelay = true;
+                postSubmitTimer.cancel(); // reset old timer
+                postSubmitTimer = new Timer();
+                postSubmitTimer.scheduleAtFixedRate(new TimerTask() {
+                    int count = 5;
+
+                    @Override
+                    public void run() {
+                        SwingUtilities.invokeLater(() -> {
+                            if (count <= 0) {
+                                timer.setText("You may poll again.");
+                                poll.setEnabled(true);
+                                isInPostSubmitDelay = false;
+                                this.cancel();
+                            } else {
+                                timer.setText("Wait: " + count);
+                                timer.setForeground(count < 3 ? Color.RED : Color.BLACK);
+                                count--;
+                            }
+                        });
+                    }
+                }, 0, 1000);
+
             } else {
                 JOptionPane.showMessageDialog(null, "Please select an answer.");
             }
