@@ -8,6 +8,7 @@ public class TriviaServer {
     private static final int UDP_PORT = 1235;
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
+    private static final List<ClientThread> buzzOrder = new ArrayList<>();
     private static final ExecutorService pool = Executors.newCachedThreadPool();
 
     private static int currentQuestionIndex = 0;
@@ -62,6 +63,7 @@ public class TriviaServer {
     }
 
     public static void sendNextQuestionToAll() throws IOException {
+    	buzzOrder.clear();
         if (currentQuestionIndex >= questions.size()) {
             endGame();
             return;
@@ -87,20 +89,45 @@ public class TriviaServer {
 
         currentQuestionIndex++;
 
-        // 🕓 Start 15-second timer for buzzing in
+     // 🕓 Start 15-second poll timer
         startTimer(15, () -> {
-            System.out.println("⏰ No one buzzed in. Skipping to next question.");
+            receivingBuzzes = false;
 
-            for (ClientThread client : clients) {
-                client.sendMessage("Time expired");
-            }
+            if (!buzzOrder.isEmpty()) {
+                ClientThread winner = buzzOrder.get(0);
+                winner.setCanAnswer(true);
+                winner.sendMessage("ACK");
+                System.out.println("🎯 Client-" + winner.getClientID() + " buzzed first and may answer.");
 
-            try {
-                sendNextQuestionToAll(); // Skip answer phase and move on
-            } catch (IOException e) {
-                e.printStackTrace();
+                // NAK all other clients
+                for (ClientThread client : clients) {
+                    if (client != winner) {
+                        client.sendMessage("NAK");
+                    }
+                }
+
+                // Start 10s answer timer
+                startTimer(10, () -> {
+                    try {
+                        clientOutOfTime(winner);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                System.out.println("⏱️ No one buzzed in. Skipping to next question.");
+                for (ClientThread client : clients) {
+                    client.sendMessage("Time expired");
+                }
+
+                try {
+                    sendNextQuestionToAll();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
+
     }
 
 
@@ -143,42 +170,11 @@ public class TriviaServer {
                     String message = new String(packet.getData(), 0, packet.getLength());
                     InetAddress address = packet.getAddress();
 
-                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
-                        receivingBuzzes = false;
-
-                        // Stop the 15-second buzz timer
-                        activeTimer.cancel();
-
-                        ClientThread winner = findClientByAddress(address);
-                        if (winner != null) {
-                            winner.setCanAnswer(true);
-                            winner.sendMessage("ACK");
-
-                            System.out.println("🎯 Client-" + winner.getClientID() + " buzzed in first!");
-
-                            // Notify others they were too late
-                            for (ClientThread client : clients) {
-                                if (client != winner) {
-                                    client.sendMessage("NAK");
-                                }
-                            }
-
-                            // Start 10-second answer timer
-                            startTimer(10, () -> {
-                                try {
-                                    clientOutOfTime(winner);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                        } else {
-                            System.out.println("No client matched for UDP address " + address);
-                        }
-                    } else {
-                        // If someone else tries to buzz after a winner has been chosen
-                        ClientThread loser = findClientByAddress(address);
-                        if (loser != null) {
-                            loser.sendMessage("NAK");
+                    if (message.equalsIgnoreCase("buzz") && receivingBuzzes) {
+                        ClientThread client = findClientByAddress(address);
+                        if (client != null && !buzzOrder.contains(client)) {
+                            buzzOrder.add(client);
+                            System.out.println("Buzz received from Client-" + client.getClientID());
                         }
                     }
                 }
@@ -186,6 +182,7 @@ public class TriviaServer {
                 System.out.println("UDP Thread error");
             }
         }
+    
 
         private ClientThread findClientByAddress(InetAddress address) {
             for (ClientThread client : clients) {
