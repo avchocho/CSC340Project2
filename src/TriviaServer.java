@@ -27,27 +27,27 @@ public class TriviaServer {
             
             new UDPBuzzThread().start();
             //start admin input thread 
-//            new Thread(() -> {
-//                Scanner scanner = new Scanner(System.in);
-//                while (true) {
-//                    String command = scanner.nextLine();
-//                    if (command.startsWith("kick ")) {
-//                        try {
-//                            int id = Integer.parseInt(command.split(" ")[1]);
-//                            for (ClientThread client : new ArrayList<>(clients)) {
-//                                if (client.getClientID() == id) {
-//                                    client.sendMessage("KILLSWITCH");
-//                                    removeClient(client);
-//                                    System.out.println("Client-" + id + " was kicked by admin.");
-//                                    break;
-//                                }
-//                            }
-//                        } catch (Exception e) {
-//                            System.out.println("Invalid kick command.");
-//                        }
-//                    }
-//                }
-//            }).start();
+            new Thread(() -> {
+                Scanner scanner = new Scanner(System.in);
+                while (true) {
+                    String command = scanner.nextLine();
+                    if (command.startsWith("kick ")) {
+                        try {
+                            int id = Integer.parseInt(command.split(" ")[1]);
+                            for (ClientThread client : new ArrayList<>(clients)) {
+                                if (client.getClientID() == id) {
+                                    client.sendMessage("KILLSWITCH");
+                                    removeClient(client);
+                                    System.out.println("Client-" + id + " was kicked by admin.");
+                                    break;
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Invalid kick command.");
+                        }
+                    }
+                }
+            }).start();
 
             new Thread(() -> {
                 while (true) {
