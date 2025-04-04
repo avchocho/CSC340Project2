@@ -95,7 +95,7 @@ public class TriviaServer {
 
         for (ClientThread client : clients) {
             client.sendMessage("Game Over! Your final score: " + client.getScore());
-            System.out.println(client.getClientID() + ": " + client.getScore());
+            System.out.println("Client " + client.getClientID() + ": " + client.getScore());
             client.close();
         }
 
