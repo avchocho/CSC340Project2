@@ -1,11 +1,8 @@
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import javax.swing.*;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ClientWindow implements ActionListener {
     private int userScore = 0;
@@ -19,9 +16,6 @@ public class ClientWindow implements ActionListener {
     private BufferedReader in;
     private PrintWriter out;
     private String selectedAnswer = "";
-
-    private boolean isInPostSubmitDelay = false;
-    private Timer postSubmitTimer = new Timer();
 
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
@@ -100,7 +94,6 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
-                        isInPostSubmitDelay = false; // allow synced timer to resume
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
@@ -110,14 +103,14 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(false);
                     });
                 } else if (line.startsWith("TIMER:")) {
-                    if (!isInPostSubmitDelay) {
-                        String time = line.split(":")[1];
-                        SwingUtilities.invokeLater(() -> {
-                            int seconds = Integer.parseInt(time);
-                            timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
-                            timer.setText("Time: " + seconds);
-                        });
-                    }
+                    String time = line.split(":")[1];
+                    SwingUtilities.invokeLater(() -> {
+                        int seconds = Integer.parseInt(time);
+                        timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
+                        timer.setText("Time: " + seconds);
+                    });
+                } else if (line.equals("UNLOCK_POLL")) {
+                    SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
                     updateGameMessage("Correct answer! +10 points", Color.GREEN);
@@ -167,7 +160,6 @@ public class ClientWindow implements ActionListener {
             selectedAnswer = "";
             poll.setEnabled(true);
             submit.setEnabled(false);
-            isInPostSubmitDelay = false;
         });
     }
 
@@ -207,31 +199,8 @@ public class ClientWindow implements ActionListener {
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
 
-                // 🕔 Start 5-second local-only timer
-                isInPostSubmitDelay = true;
-                postSubmitTimer.cancel();
-                postSubmitTimer = new Timer();
-
-                postSubmitTimer.scheduleAtFixedRate(new TimerTask() {
-                    int count = 5;
-
-                    @Override
-                    public void run() {
-                        SwingUtilities.invokeLater(() -> {
-                            if (count <= 0) {
-                                timer.setText("You may poll again.");
-                                poll.setEnabled(true);
-                                isInPostSubmitDelay = false;
-                                this.cancel();
-                            } else {
-                                timer.setText("Wait: " + count);
-                                timer.setForeground(count < 3 ? Color.RED : Color.BLACK);
-                                count--;
-                            }
-                        });
-                    }
-                }, 0, 1000);
-
+                // Notify server to start 5-second global timer
+                out.println("SUBMIT_TIMER");
             } else {
                 JOptionPane.showMessageDialog(null, "Please select an answer.");
             }

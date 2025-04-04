@@ -15,6 +15,8 @@ public class TriviaServer {
     private static boolean hasPrintedWinners = false;
     private static ServerSocket serverSocket;
 
+    private static Timer activeTimer = new Timer();
+
     public static void main(String[] args) {
         loadQuestions();
 
@@ -42,7 +44,6 @@ public class TriviaServer {
                         pool.execute(client);
                         System.out.println("Client-" + client.getClientID() + " connected.");
                     } catch (IOException e) {
-                        System.out.println("🔌 ServerSocket error: " + e.getMessage());
                         break;
                     }
                 }
@@ -94,7 +95,6 @@ public class TriviaServer {
 
         for (ClientThread client : clients) {
             client.sendMessage("Game Over! Your final score: " + client.getScore());
-            System.out.println("Client-" + client.getClientID() + ": " + client.getScore());
             client.close();
         }
 
@@ -108,7 +108,6 @@ public class TriviaServer {
                 questions.add(new Question(line));
             }
         } catch (IOException e) {
-            System.err.println("⚠ Could not load questions.");
             e.printStackTrace();
         }
     }
@@ -118,7 +117,6 @@ public class TriviaServer {
 
         public void run() {
             try (DatagramSocket socket = new DatagramSocket(UDP_PORT)) {
-                System.out.println("📡 UDP Buzz thread listening on port " + UDP_PORT);
                 while (true) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
@@ -131,16 +129,13 @@ public class TriviaServer {
                         if (winner != null) {
                             winner.setCanAnswer(true);
                             winner.sendMessage("ACK");
-
-                            // Start synced timer for everyone
-                            broadcastTimer(10, () -> {
+                            startTimer(10, () -> {
                                 try {
                                     clientOutOfTime(winner);
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
                             });
-
                         } else {
                             System.out.println("⚠ No client matched for UDP address " + address);
                         }
@@ -152,7 +147,7 @@ public class TriviaServer {
                     }
                 }
             } catch (IOException e) {
-                System.out.println("❌ UDP Thread error: " + e.getMessage());
+                System.out.println("❌ UDP Thread error");
             }
         }
 
@@ -166,27 +161,27 @@ public class TriviaServer {
         }
     }
 
-    public static void broadcastTimer(int durationInSeconds, Runnable onExpire) {
-        new Thread(() -> {
-            int secondsLeft = durationInSeconds;
-            while (secondsLeft >= 0) {
+    public static void startTimer(int seconds, Runnable onExpire) {
+        activeTimer.cancel();
+        activeTimer = new Timer();
+
+        activeTimer.scheduleAtFixedRate(new TimerTask() {
+            int timeLeft = seconds;
+
+            @Override
+            public void run() {
                 for (ClientThread client : clients) {
-                    client.sendMessage("TIMER:" + secondsLeft);
+                    client.sendMessage("TIMER:" + timeLeft);
                 }
 
-                if (secondsLeft == 0) {
+                if (timeLeft <= 0) {
+                    cancel();
                     onExpire.run();
-                    break;
                 }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                secondsLeft--;
+                timeLeft--;
             }
-        }).start();
+        }, 0, 1000);
     }
 
     public static void removeClient(ClientThread client) throws IOException {
@@ -201,6 +196,15 @@ public class TriviaServer {
     public static void clientOutOfTime(ClientThread client) throws IOException {
         client.sendMessage("Time expired");
         sendNextQuestionToAll();
+    }
+
+    public static void handleSubmission() {
+        startTimer(5, () -> {
+            for (ClientThread client : clients) {
+                client.sendMessage("You may poll again.");
+                client.sendMessage("UNLOCK_POLL");
+            }
+        });
     }
 
     public static void moveAllToNextQuestion() throws IOException {
