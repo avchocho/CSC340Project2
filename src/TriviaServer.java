@@ -300,10 +300,10 @@ public class TriviaServer {
         	System.out.println("Client-" + client.getClientID() + " terminated (missed 2 questions in a row)");
         	client.sendMessage("killswitch");
         	removeClient(client);
-        } else {
-        	sendNextQuestionToAll();
+        } 
+        	sendNextQuestionToAll(); //move on to next question even if client was removed
         }
-    }
+    
 
     public static void handleSubmission() {
         startTimer(5, () -> {
