@@ -144,7 +144,6 @@ public class TriviaServer {
         }
 
         pool.shutdown();
-        // serverSocket.close(); ← only close manually if you're done
     }
 
     private static void loadQuestions() {
@@ -169,22 +168,24 @@ public class TriviaServer {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
                     String message = new String(packet.getData(), 0, packet.getLength());
-                    InetAddress address = packet.getAddress();
 
-                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
-                        receivingBuzzes = false;
-                        ClientThread winner = findClientByAddress(address);
-                        if (winner != null) {
-                            winner.setCanAnswer(true);
-                            winner.sendMessage("ACK — You may answer!");
-//                            winner.sendMessage("Time 10");
+                    if (message.startsWith("buzz:")) {
+                        int clientPort = Integer.parseInt(message.split(":")[1].trim());
+
+                        if (receivingBuzzes) {
+                            receivingBuzzes = false;
+                            ClientThread winner = findClientByPort(clientPort);
+                            if (winner != null) {
+                                winner.setCanAnswer(true);
+                                winner.sendMessage("ACK — You may answer!");
+                            } else {
+                                System.out.println("⚠ No client matched for port: " + clientPort);
+                            }
                         } else {
-                            System.out.println("⚠ No client matched for UDP address " + address);
-                        }
-                    } else {
-                        ClientThread loser = findClientByAddress(address);
-                        if (loser != null) {
-                            loser.sendMessage("NAK — Too late!");
+                            ClientThread loser = findClientByPort(clientPort);
+                            if (loser != null) {
+                                loser.sendMessage("NAK — Too late!");
+                            }
                         }
                     }
                 }
@@ -193,9 +194,9 @@ public class TriviaServer {
             }
         }
 
-        private ClientThread findClientByAddress(InetAddress address) {
+        private ClientThread findClientByPort(int port) {
             for (ClientThread client : clients) {
-                if (client.getSocket().getInetAddress().equals(address)) {
+                if (client.getSocket().getLocalPort() == port) {
                     return client;
                 }
             }
