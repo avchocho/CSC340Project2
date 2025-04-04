@@ -26,17 +26,18 @@ public class TriviaServer {
             System.out.println("Trivia Server started on port " + TCP_PORT);
             
             new UDPBuzzThread().start();
-            //start admin input thread 
+            
+            //manual kill specific client 
             new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (true) {
                     String command = scanner.nextLine();
-                    if (command.startsWith("kick ")) {
+                    if (command.startsWith("kill ")) {
                         try {
                             int id = Integer.parseInt(command.split(" ")[1]);
                             for (ClientThread client : new ArrayList<>(clients)) {
                                 if (client.getClientID() == id) {
-                                    client.sendMessage("KILLSWITCH");
+                                    client.sendMessage("killswitch");
                                     removeClient(client);
                                     System.out.println("Client-" + id + " was kicked by admin.");
                                     break;
