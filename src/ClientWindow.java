@@ -20,8 +20,8 @@ public class ClientWindow implements ActionListener {
     private PrintWriter out;
     private String selectedAnswer = "";
 
-    private Timer postSubmitTimer = new Timer(); // used for 5s timer
     private boolean isInPostSubmitDelay = false;
+    private Timer postSubmitTimer = new Timer();
 
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
@@ -100,7 +100,7 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
-                        isInPostSubmitDelay = false; // make sure syncing resumes
+                        isInPostSubmitDelay = false; // allow synced timer to resume
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
@@ -110,8 +110,8 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(false);
                     });
                 } else if (line.startsWith("TIMER:")) {
-                    String time = line.split(":")[1];
                     if (!isInPostSubmitDelay) {
+                        String time = line.split(":")[1];
                         SwingUtilities.invokeLater(() -> {
                             int seconds = Integer.parseInt(time);
                             timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
@@ -207,10 +207,11 @@ public class ClientWindow implements ActionListener {
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
 
-                // Begin 5-second post-submit delay
+                // 🕔 Start 5-second local-only timer
                 isInPostSubmitDelay = true;
-                postSubmitTimer.cancel(); // reset old timer
+                postSubmitTimer.cancel();
                 postSubmitTimer = new Timer();
+
                 postSubmitTimer.scheduleAtFixedRate(new TimerTask() {
                     int count = 5;
 
