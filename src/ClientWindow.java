@@ -200,9 +200,10 @@ public class ClientWindow implements ActionListener {
                 for (JRadioButton option : options) option.setEnabled(false);
 
                 // Notify server to start 5-second global timer
-                out.println("SUBMIT_TIMER");
+                //out.println("submit timer"); debug statement
             } else {
-                JOptionPane.showMessageDialog(null, "Please select an answer.");
+            	gameMessage.setForeground(Color.RED);
+                gameMessage.setText("Please select an answer.");
             }
         }
     }

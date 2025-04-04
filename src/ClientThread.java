@@ -91,11 +91,11 @@ public class ClientThread implements Runnable {
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
-            System.out.println("✅ Client-" + clientID + " answered correctly.");
+            System.out.println("Client-" + clientID + " answered correctly.");
         } else {
             decreaseScore(10);
             sendMessage("wrong " + score);
-            System.out.println("❌ Client-" + clientID + " answered incorrectly.");
+            System.out.println("Client-" + clientID + " answered incorrectly.");
         }
 
         canAnswer = false;
@@ -121,7 +121,7 @@ public class ClientThread implements Runnable {
 
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("📥 Client-" + clientID + ": " + message);
+                System.out.println("Client-" + clientID + ": " + message);
 
                 if (message.equalsIgnoreCase("Expired")) {
                     TriviaServer.clientOutOfTime(this);

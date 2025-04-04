@@ -22,7 +22,7 @@ public class TriviaServer {
 
         try {
             serverSocket = new ServerSocket(TCP_PORT);
-            System.out.println("📡 Trivia Server started on port " + TCP_PORT);
+            System.out.println("Trivia Server started on port " + TCP_PORT);
 
             new UDPBuzzThread().start();
 
@@ -53,7 +53,7 @@ public class TriviaServer {
                 Thread.sleep(500);
             }
 
-            System.out.println("✅ Starting Trivia Game!");
+            System.out.println("Starting Trivia Game!");
             sendNextQuestionToAll();
 
         } catch (Exception e) {
@@ -90,7 +90,7 @@ public class TriviaServer {
         if (hasPrintedWinners) return;
         hasPrintedWinners = true;
 
-        System.out.println("\n🏁 Game Over. Final Scores:");
+        System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : clients) {
@@ -138,7 +138,7 @@ public class TriviaServer {
                                 }
                             });
                         } else {
-                            System.out.println("⚠ No client matched for UDP address " + address);
+                            System.out.println("No client matched for UDP address " + address);
                         }
                     } else {
                         ClientThread loser = findClientByAddress(address);
@@ -148,7 +148,7 @@ public class TriviaServer {
                     }
                 }
             } catch (IOException e) {
-                System.out.println("❌ UDP Thread error");
+                System.out.println("UDP Thread error");
             }
         }
 
