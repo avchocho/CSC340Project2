@@ -197,7 +197,7 @@ public class ClientWindow implements ActionListener {
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
-                restartTimer(0); // Stops timer when submitting
+                restartTimer(15); // Stops timer when submitting
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
             } else {

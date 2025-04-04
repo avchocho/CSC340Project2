@@ -114,7 +114,7 @@ public class ClientThread implements Runnable {
                 sendMessage("WaitForNextRound");
                 int waitAt = TriviaServer.getCurrentQuestionIndex();
                 while (TriviaServer.getCurrentQuestionIndex() == waitAt) {
-                    Thread.sleep(500);
+                    Thread.sleep(800);
                 }
                 joinedMidGame = false;
             }
