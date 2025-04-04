@@ -3,8 +3,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
@@ -13,7 +11,6 @@ public class ClientWindow implements ActionListener {
     private JRadioButton[] options;
     private ButtonGroup optionGroup;
     private JLabel question, timer, score, gameMessage;
-    private TimerTask clock;
     private JFrame window;
 
     private Socket socket;
@@ -92,43 +89,26 @@ public class ClientWindow implements ActionListener {
                     displayQuestion(fullQuestion.toString());
                 } else if (line.startsWith("Your Answer")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
-                } 
-//                else if (line.startsWith("ACK")) {
-//                    SwingUtilities.invokeLater(() -> {
-//                        gameMessage.setText("You won the buzz! You may answer.");
-//                        poll.setEnabled(false);
-//                        submit.setEnabled(true);
-//                        for (JRadioButton option : options) option.setEnabled(true);
-//                        restartTimer(10); // Start 10-second count down
-//                    });
-                
-                else if (line.startsWith("ACK|")) {
-                    String[] parts = line.split("\\|");
-                    long expireAt = Long.parseLong(parts[1]);
-
-                    long now = System.currentTimeMillis();
-                    int duration = (int) Math.ceil((expireAt - now) / 1000.0); // sync based on timestamp
-
+                } else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
-
-                        restartTimer(duration, () -> {
-                            timer.setText("Timer expired");
-                            out.println("Expired");
-                            submit.setEnabled(false);
-                            for (JRadioButton option : options) option.setEnabled(false);
-                        });
                     });
-                    
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
                         submit.setEnabled(false);
                         for (JRadioButton option : options) option.setEnabled(false);
+                    });
+                } else if (line.startsWith("TIMER:")) {
+                    String time = line.split(":")[1];
+                    SwingUtilities.invokeLater(() -> {
+                        int seconds = Integer.parseInt(time);
+                        timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
+                        timer.setText("Time: " + seconds);
                     });
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
@@ -195,19 +175,6 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-//    private void restartTimer(int duration) {
-//        if (clock != null) clock.cancel();
-//        clock = new TimerCode(duration);
-//        new Timer().schedule(clock, 0, 1000);
-//    }
-    
-    private void restartTimer(int duration, Runnable onExpire) {
-        if (clock != null) clock.cancel();
-        clock = new TimerCode(duration, onExpire);
-        new Timer().schedule(clock, 0, 1000);
-    }
-
-
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
@@ -228,17 +195,6 @@ public class ClientWindow implements ActionListener {
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
-                //restartTimer(0); // Stops timer when submitting
-                
-                if (clock != null) clock.cancel(); // Stop the main timer
-
-                restartTimer(5, () -> {
-                    timer.setText("You may poll again.");
-                    poll.setEnabled(true); // Other players can poll again
-                });
-
-                
-                
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
             } else {
@@ -246,55 +202,4 @@ public class ClientWindow implements ActionListener {
             }
         }
     }
-
-//    public class TimerCode extends TimerTask {
-//        private int duration;
-//
-//        public TimerCode(int duration) {
-//            this.duration = duration;
-//        }
-//
-//        @Override
-//        public void run() {
-//            if (duration < 0) {
-//                timer.setText("Timer expired");
-//                out.println("Expired");
-//                submit.setEnabled(false);
-//                for (JRadioButton option : options) option.setEnabled(false);
-//                this.cancel();
-//                return;
-//            }
-//            timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
-//            timer.setText("Time: " + duration);
-//            duration--;
-//        }
-//    }
-    
-    
-    public class TimerCode extends TimerTask {
-        private int duration;
-        private Runnable onExpire;
-
-        public TimerCode(int duration, Runnable onExpire) {
-            this.duration = duration;
-            this.onExpire = onExpire;
-        }
-
-        @Override
-        public void run() {
-            if (duration < 0) {
-                SwingUtilities.invokeLater(onExpire);
-                this.cancel();
-                return;
-            }
-            SwingUtilities.invokeLater(() -> {
-                timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
-                timer.setText("Time: " + duration);
-            });
-            duration--;
-        }
-    }
-
-    
-    
 }

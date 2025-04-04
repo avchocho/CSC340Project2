@@ -130,10 +130,18 @@ public class TriviaServer {
                         ClientThread winner = findClientByAddress(address);
                         if (winner != null) {
                             winner.setCanAnswer(true);
-                            
-                            long deadline = System.currentTimeMillis() + 10000;
-                            winner.sendMessage("ACK|" + deadline);
-                            } else {
+                            winner.sendMessage("ACK");
+
+                            // Start synced timer for everyone
+                            broadcastTimer(10, () -> {
+                                try {
+                                    clientOutOfTime(winner);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+
+                        } else {
                             System.out.println("⚠ No client matched for UDP address " + address);
                         }
                     } else {
@@ -156,6 +164,29 @@ public class TriviaServer {
             }
             return null;
         }
+    }
+
+    public static void broadcastTimer(int durationInSeconds, Runnable onExpire) {
+        new Thread(() -> {
+            int secondsLeft = durationInSeconds;
+            while (secondsLeft >= 0) {
+                for (ClientThread client : clients) {
+                    client.sendMessage("TIMER:" + secondsLeft);
+                }
+
+                if (secondsLeft == 0) {
+                    onExpire.run();
+                    break;
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                secondsLeft--;
+            }
+        }).start();
     }
 
     public static void removeClient(ClientThread client) throws IOException {
