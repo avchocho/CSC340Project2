@@ -102,15 +102,20 @@ public class ClientWindow implements ActionListener {
 //                        restartTimer(10); // Start 10-second count down
 //                    });
                 
-                else if (line.startsWith("ACK")) {
+                else if (line.startsWith("ACK|")) {
+                    String[] parts = line.split("\\|");
+                    long expireAt = Long.parseLong(parts[1]);
+
+                    long now = System.currentTimeMillis();
+                    int duration = (int) Math.ceil((expireAt - now) / 1000.0); // sync based on timestamp
+
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
 
-                        // Start 10-second timer to submit answer
-                        restartTimer(10, () -> {
+                        restartTimer(duration, () -> {
                             timer.setText("Timer expired");
                             out.println("Expired");
                             submit.setEnabled(false);

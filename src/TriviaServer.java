@@ -130,8 +130,10 @@ public class TriviaServer {
                         ClientThread winner = findClientByAddress(address);
                         if (winner != null) {
                             winner.setCanAnswer(true);
-                            winner.sendMessage("ACK");
-                        } else {
+                            
+                            long deadline = System.currentTimeMillis() + 10000;
+                            winner.sendMessage("ACK|" + deadline);
+                            } else {
                             System.out.println("⚠ No client matched for UDP address " + address);
                         }
                     } else {
