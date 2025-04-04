@@ -4,8 +4,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class TriviaServer {
-    private static final int TCP_PORT = 1245;
-    private static final int UDP_PORT = 1256;
+    private static final int TCP_PORT = 1234;
+    private static final int UDP_PORT = 1235;
     private static final List<Question> questions = new ArrayList<>();
     private static final List<ClientThread> clients = new ArrayList<>();
     private static final ExecutorService pool = Executors.newCachedThreadPool();

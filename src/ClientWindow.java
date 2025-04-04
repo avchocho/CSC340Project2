@@ -92,14 +92,32 @@ public class ClientWindow implements ActionListener {
                     displayQuestion(fullQuestion.toString());
                 } else if (line.startsWith("Your Answer")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
-                } else if (line.startsWith("ACK")) {
+                } 
+//                else if (line.startsWith("ACK")) {
+//                    SwingUtilities.invokeLater(() -> {
+//                        gameMessage.setText("You won the buzz! You may answer.");
+//                        poll.setEnabled(false);
+//                        submit.setEnabled(true);
+//                        for (JRadioButton option : options) option.setEnabled(true);
+//                        restartTimer(10); // Start 10-second count down
+//                    });
+                
+                else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
-                        restartTimer(10); // Start 10-second count down
+
+                        // Start 10-second timer to submit answer
+                        restartTimer(10, () -> {
+                            timer.setText("Timer expired");
+                            out.println("Expired");
+                            submit.setEnabled(false);
+                            for (JRadioButton option : options) option.setEnabled(false);
+                        });
                     });
+                    
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
@@ -172,11 +190,18 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-    private void restartTimer(int duration) {
+//    private void restartTimer(int duration) {
+//        if (clock != null) clock.cancel();
+//        clock = new TimerCode(duration);
+//        new Timer().schedule(clock, 0, 1000);
+//    }
+    
+    private void restartTimer(int duration, Runnable onExpire) {
         if (clock != null) clock.cancel();
-        clock = new TimerCode(duration);
+        clock = new TimerCode(duration, onExpire);
         new Timer().schedule(clock, 0, 1000);
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -198,7 +223,17 @@ public class ClientWindow implements ActionListener {
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
-                restartTimer(0); // Stops timer when submitting
+                //restartTimer(0); // Stops timer when submitting
+                
+                if (clock != null) clock.cancel(); // Stop the main timer
+
+                restartTimer(5, () -> {
+                    timer.setText("You may poll again.");
+                    poll.setEnabled(true); // Other players can poll again
+                });
+
+                
+                
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
             } else {
@@ -207,26 +242,54 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+//    public class TimerCode extends TimerTask {
+//        private int duration;
+//
+//        public TimerCode(int duration) {
+//            this.duration = duration;
+//        }
+//
+//        @Override
+//        public void run() {
+//            if (duration < 0) {
+//                timer.setText("Timer expired");
+//                out.println("Expired");
+//                submit.setEnabled(false);
+//                for (JRadioButton option : options) option.setEnabled(false);
+//                this.cancel();
+//                return;
+//            }
+//            timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
+//            timer.setText("Time: " + duration);
+//            duration--;
+//        }
+//    }
+    
+    
     public class TimerCode extends TimerTask {
         private int duration;
+        private Runnable onExpire;
 
-        public TimerCode(int duration) {
+        public TimerCode(int duration, Runnable onExpire) {
             this.duration = duration;
+            this.onExpire = onExpire;
         }
 
         @Override
         public void run() {
             if (duration < 0) {
-                timer.setText("Timer expired");
-                out.println("Expired");
-                submit.setEnabled(false);
-                for (JRadioButton option : options) option.setEnabled(false);
+                SwingUtilities.invokeLater(onExpire);
                 this.cancel();
                 return;
             }
-            timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
-            timer.setText("Time: " + duration);
+            SwingUtilities.invokeLater(() -> {
+                timer.setForeground(duration < 6 ? Color.RED : Color.BLACK);
+                timer.setText("Time: " + duration);
+            });
             duration--;
         }
     }
+
+    
+    
 }
