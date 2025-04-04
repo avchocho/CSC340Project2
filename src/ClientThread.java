@@ -76,6 +76,7 @@ public class ClientThread implements Runnable {
             if (in != null) in.close();
             if (out != null) out.close();
             if (socket != null) socket.close();
+            System.out.println("Client-" + clientID + "disconnected.");
         } catch (IOException e) {
             e.printStackTrace();
         }

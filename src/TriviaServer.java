@@ -93,10 +93,11 @@ public class TriviaServer {
         System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
-        for (ClientThread client : clients) {
+        for (ClientThread client : new ArrayList<>(clients)) {
             client.sendMessage("Game Over! Your final score: " + client.getScore());
             System.out.println("Client " + client.getClientID() + ": " + client.getScore());
-            client.close();
+            //client.close();
+            TriviaServer.removeClient(client);
         }
 
         pool.shutdown();
@@ -187,7 +188,6 @@ public class TriviaServer {
 
     public static void removeClient(ClientThread client) throws IOException {
         clients.remove(client);
-        System.out.println("removed client" + client.getClientID());
         client.close();
     }
 
