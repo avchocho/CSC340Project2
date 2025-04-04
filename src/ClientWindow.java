@@ -98,6 +98,7 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
+                        restartTimer(10); // Start 10-second count down
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
@@ -197,7 +198,7 @@ public class ClientWindow implements ActionListener {
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
-                restartTimer(15); // Stops timer when submitting
+                restartTimer(0); // Stops timer when submitting
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
             } else {
