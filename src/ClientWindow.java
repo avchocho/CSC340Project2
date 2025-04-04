@@ -18,7 +18,7 @@ public class ClientWindow implements ActionListener {
     private String selectedAnswer = "";
 
     public ClientWindow(String serverIP, int port) {
-        window = new JFrame("Trivia Game");
+        window = new JFrame("Trivia");
         window.setSize(400, 400);
         window.setLayout(null);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -79,7 +79,10 @@ public class ClientWindow implements ActionListener {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-                if (line.startsWith("Question")) {
+            	
+            	if(line.startsWith("Welcome Client-")) {
+            		updateGameMessage(line, Color.BLUE);
+            	} else if (line.startsWith("Question")) {
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
