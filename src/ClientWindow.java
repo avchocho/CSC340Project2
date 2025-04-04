@@ -4,6 +4,8 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
 import javax.swing.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ClientWindow implements ActionListener {
     private int userScore = 0;
@@ -17,6 +19,8 @@ public class ClientWindow implements ActionListener {
     private BufferedReader in;
     private PrintWriter out;
     private String selectedAnswer = "";
+
+    private Timer currentTimer = new Timer(); // Shared timer controller
 
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
@@ -95,6 +99,14 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
+
+                        // Start 10-second answer timer
+                        startCountdown(10, () -> {
+                            timer.setText("Timer expired");
+                            out.println("Expired");
+                            submit.setEnabled(false);
+                            for (JRadioButton option : options) option.setEnabled(false);
+                        });
                     });
                 } else if (line.startsWith("NAK")) {
                     SwingUtilities.invokeLater(() -> {
@@ -102,13 +114,6 @@ public class ClientWindow implements ActionListener {
                         poll.setEnabled(false);
                         submit.setEnabled(false);
                         for (JRadioButton option : options) option.setEnabled(false);
-                    });
-                } else if (line.startsWith("TIMER:")) {
-                    String time = line.split(":")[1];
-                    SwingUtilities.invokeLater(() -> {
-                        int seconds = Integer.parseInt(time);
-                        timer.setForeground(seconds < 6 ? Color.RED : Color.BLACK);
-                        timer.setText("Time: " + seconds);
                     });
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
@@ -175,6 +180,30 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    private void startCountdown(int seconds, Runnable onExpire) {
+        currentTimer.cancel();              // Stop any existing timer
+        currentTimer = new Timer();         // Replace with new one
+
+        currentTimer.scheduleAtFixedRate(new TimerTask() {
+            int timeLeft = seconds;
+
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    if (timeLeft <= 0) {
+                        timer.setText("Timer expired");
+                        onExpire.run();
+                        cancel();
+                    } else {
+                        timer.setForeground(timeLeft < 6 ? Color.RED : Color.BLACK);
+                        timer.setText("Time: " + timeLeft);
+                        timeLeft--;
+                    }
+                });
+            }
+        }, 0, 1000);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
@@ -197,6 +226,12 @@ public class ClientWindow implements ActionListener {
                 out.println(selectedAnswer);
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
+
+                // Start 5-second post-submit timer
+                startCountdown(5, () -> {
+                    timer.setText("You may poll again.");
+                    poll.setEnabled(true);
+                });
             } else {
                 JOptionPane.showMessageDialog(null, "Please select an answer.");
             }
