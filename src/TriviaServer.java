@@ -187,6 +187,7 @@ public class TriviaServer {
 
     public static void removeClient(ClientThread client) throws IOException {
         clients.remove(client);
+        System.out.println("removed client" + client.getClientID());
         client.close();
     }
 

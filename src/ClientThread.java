@@ -130,7 +130,7 @@ public class ClientThread implements Runnable {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            System.out.println("⚠ Client-" + clientID + " disconnected.");
+            System.out.println("Client-" + clientID + " disconnected.");
             try {
                 TriviaServer.removeClient(this);
                 close();
