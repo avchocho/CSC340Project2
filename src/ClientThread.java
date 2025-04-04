@@ -76,7 +76,7 @@ public class ClientThread implements Runnable {
             if (in != null) in.close();
             if (out != null) out.close();
             if (socket != null) socket.close();
-            System.out.println("Client-" + clientID + "disconnected.");
+            System.out.println("Client-" + clientID + " disconnected.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -119,8 +119,6 @@ public class ClientThread implements Runnable {
                 }
                 joinedMidGame = false;
             }
-            System.out.println("Client-" + clientID + " message loop ended (readLine returned null).");
-
 
             String message;
             while ((message = in.readLine()) != null) {
@@ -132,8 +130,14 @@ public class ClientThread implements Runnable {
                     checkAnswer(message);
                 }
             }
+
+            // 🟡 Graceful exit: readLine() returned null (client quit)
+            System.out.println("Client-" + clientID + " readLine() returned null.");
+            TriviaServer.removeClient(this);
+            close();
+
         } catch (IOException | InterruptedException e) {
-            System.out.println("Client-" + clientID + " disconnected.");
+            System.out.println("Client-" + clientID + " disconnected (exception).");
             try {
                 TriviaServer.removeClient(this);
                 close();

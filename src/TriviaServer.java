@@ -139,17 +139,20 @@ public class TriviaServer {
         if (hasPrintedWinners) return;
         hasPrintedWinners = true;
 
-        System.out.println("\n Game Over. Final Scores:");
+        System.out.println("\n🏁 Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : new ArrayList<>(clients)) {
             client.sendMessage("Game Over! Your final score: " + client.getScore());
             System.out.println("Client " + client.getClientID() + ": " + client.getScore());
-            //client.close();
-            TriviaServer.removeClient(client);
+            removeClient(client);  // this calls close() which prints disconnect
         }
 
-        pool.shutdown();
+        // 🔐 Clean shutdown
+        serverSocket.close();       // ❗force accept() to fail
+        pool.shutdownNow();         // stop all client threads
+        System.out.println("🛑 Server shutting down.");
+        System.exit(0);             // end process
     }
 
     private static void loadQuestions() {
@@ -241,6 +244,7 @@ public class TriviaServer {
 
     public static void removeClient(ClientThread client) throws IOException {
         clients.remove(client);
+        System.out.println("Removing Client-" + client.getClientID());
         client.close();
     }
 
