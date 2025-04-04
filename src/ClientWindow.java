@@ -54,7 +54,7 @@ public class ClientWindow implements ActionListener {
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
         poll.addActionListener(this);
-        //poll.setEnabled(false);
+        poll.setEnabled(false);
         window.add(poll);
 
         submit = new JButton("Submit");
@@ -190,7 +190,7 @@ public class ClientWindow implements ActionListener {
 
         if (src == poll) {
             sendUDPBuzz();
-            poll.setEnabled(false);
+            poll.setEnabled(true);
         }
 
         if (src == submit) {
