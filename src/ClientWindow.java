@@ -117,6 +117,16 @@ public class ClientWindow implements ActionListener {
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
                     updateGameMessage("Wrong answer! -10 points", Color.RED);
+                } else if (line.toLowerCase().startsWith("noanswerpenalty")) {
+                    String[] parts = line.split(" ");
+                    if (parts.length >= 2) {
+                        try {
+                            userScore = Integer.parseInt(parts[1]);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid score received: " + line);
+                        }
+                    }
+                    updateGameMessage("You did not answer in time. -20 points", Color.RED);
                 } else if (line.contains("WaitForNextRound")) {
                     updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
                     disableControls();

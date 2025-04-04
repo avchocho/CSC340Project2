@@ -139,8 +139,25 @@ public class ClientThread implements Runnable {
                 System.out.println("Client-" + clientID + ": " + message);
 
                 if (message.equalsIgnoreCase("Expired")) {
+                    if (canAnswer) {
+                        canAnswer = false;
+                        score -= 20;
+                        unansweredCount++;
+                        sendMessage("noAnswerPenalty " + score);
+                        System.out.println("Client-" + clientID + " did not answer. -20 points.");
+
+                        if (unansweredCount >= 2) {
+                            sendMessage("You have been removed for not answering twice.");
+                            System.out.println("Client-" + clientID + " kicked for inactivity.");
+                            TriviaServer.removeClient(this);
+                            close();
+                            return;
+                        }
+                    }
                     TriviaServer.clientOutOfTime(this);
-                } else {
+                }
+
+                else {
                     checkAnswer(message);
                 }
             }
