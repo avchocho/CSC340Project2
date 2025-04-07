@@ -87,6 +87,9 @@ public class TriviaServer {
             synchronized (clients) {
                 if (clients.size() < 2) {
                     System.out.println("Not enough clients joined. Server shutting down.");
+                    for (ClientThread client: new ArrayList <>(clients)) {
+                    	client.sendMessage("not_enough_players");
+                    }
                     if (serverSocket != null && !serverSocket.isClosed()) {
                         serverSocket.close();
                     }
