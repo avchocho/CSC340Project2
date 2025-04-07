@@ -134,6 +134,14 @@ public class ClientWindow implements ActionListener {
                         JOptionPane.showMessageDialog(null, "You have been removed from the game.");
                         System.exit(0);
                     });
+                } else if (line.equals("not_enough_players")) {
+                	SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                            "Not enough players joined.\nThe game cannot start.",
+                            "Game Cancelled",
+                            JOptionPane.WARNING_MESSAGE);
+                        System.exit(0);
+                    });
                 }
             }
         } catch (IOException e) {
