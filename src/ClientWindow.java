@@ -18,7 +18,7 @@ public class ClientWindow implements ActionListener {
     private String selectedAnswer = "";
 
     public ClientWindow(String serverIP, int port) {
-        window = new JFrame("Trivia");
+        window = new JFrame("Trivia Game");
         window.setSize(400, 400);
         window.setLayout(null);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

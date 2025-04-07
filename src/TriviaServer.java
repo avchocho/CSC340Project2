@@ -76,7 +76,13 @@ public class TriviaServer {
             while (clients.size() < 2) {
                 Thread.sleep(500);
             }
-
+//            System.out.println("Starting Trivia Game!");
+//            sendNextQuestionToAll();
+            //after 2 clients connected. give about 10 seconds for others to join
+            for (int i = 10; i > 0; i--) {
+            	System.out.println("Game starts in: " + i + "seconds(s)...");
+            	Thread.sleep(1000);
+            }
             System.out.println("Starting Trivia Game!");
             sendNextQuestionToAll();
 
