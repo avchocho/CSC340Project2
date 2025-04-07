@@ -56,13 +56,13 @@ public class TriviaServer {
                         Socket socket = serverSocket.accept();
                         ClientThread client = new ClientThread(socket, clients.size());
 
+                        synchronized (clients) {
+                            clients.add(client);
+                        }
+                        
                         if (currentQuestionIndex > 0) {
                             client.setJoinedMidGame(true);
                             client.sendMessage("WaitForNextRound");
-                        }
-
-                        synchronized (clients) {
-                            clients.add(client);
                         }
 
                         pool.execute(client);
@@ -72,19 +72,31 @@ public class TriviaServer {
                     }
                 }
             }).start();
+            //wait 15 seconds for clients to join 
+            System.out.println("waiting 15 seconds for clients to join..");
+            Thread.sleep(15000);
+            
+            
 
-            while (clients.size() < 2) {
-                Thread.sleep(500);
-            }
+//            while (clients.size() < 2) {
+//                Thread.sleep(500);
+//            }
 //            System.out.println("Starting Trivia Game!");
 //            sendNextQuestionToAll();
-            //after 2 clients connected. give about 10 seconds for others to join
-            for (int i = 10; i > 0; i--) {
-            	System.out.println("Game starts in: " + i + "seconds(s)...");
-            	Thread.sleep(1000);
+
+            synchronized (clients) {
+                if (clients.size() < 2) {
+                    System.out.println("Not enough clients joined. Server shutting down.");
+                    if (serverSocket != null && !serverSocket.isClosed()) {
+                        serverSocket.close();
+                    }
+                    pool.shutdownNow();
+                    System.exit(0);
+                } else {
+                    System.out.println("🎮 Starting Trivia Game!");
+                    sendNextQuestionToAll();
+                }
             }
-            System.out.println("Starting Trivia Game!");
-            sendNextQuestionToAll();
 
         } catch (Exception e) {
             e.printStackTrace();
