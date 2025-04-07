@@ -15,6 +15,7 @@ public class TriviaServer {
     private static boolean receivingBuzzes = true;
     private static boolean hasPrintedWinners = false;
     private static ServerSocket serverSocket;
+    private static int nextClientID = 0;
 
     private static Timer activeTimer = new Timer();
 
@@ -54,7 +55,7 @@ public class TriviaServer {
                 while (true) {
                     try {
                         Socket socket = serverSocket.accept();
-                        ClientThread client = new ClientThread(socket, clients.size());
+                        ClientThread client = new ClientThread(socket, nextClientID++);
 
                         synchronized (clients) {
                             clients.add(client);
