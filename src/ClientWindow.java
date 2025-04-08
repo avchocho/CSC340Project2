@@ -79,9 +79,10 @@ public class ClientWindow implements ActionListener {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-                if (line.startsWith("Welcome Client-")) {
-                    updateGameMessage(line, Color.BLUE);
-                } else if (line.startsWith("Question")) {
+            	
+            	if(line.startsWith("Welcome Client-")) {
+            		updateGameMessage(line, Color.BLUE);
+            	} else if (line.startsWith("Question")) {
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
@@ -92,9 +93,9 @@ public class ClientWindow implements ActionListener {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
-                        gameMessage.setText("You buzzed first. You may answer.");
+                        gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
-                        submit.setEnabled(false); // Wait for answer selection
+                        submit.setEnabled(true);
                         for (JRadioButton option : options) option.setEnabled(true);
                     });
                 } else if (line.startsWith("NAK")) {
@@ -113,16 +114,12 @@ public class ClientWindow implements ActionListener {
                     });
                 } else if (line.equals("UNLOCK_POLL")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
-                } else if (line.equalsIgnoreCase("WRONG_NEXT")) {
-                    updateGameMessage("Wrong answer. Moving to next client...", Color.RED);
-                } else if (line.equalsIgnoreCase("YOUR_TURN")) {
-                    updateGameMessage("Previous client incorrect. You now may answer.", Color.BLUE);
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
                     updateGameMessage("Correct answer! +10 points", Color.GREEN);
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
-                    updateGameMessage("Incorrect answer! -10 points", Color.RED);
+                    updateGameMessage("Wrong answer! -10 points", Color.RED);
                 } else if (line.toLowerCase().startsWith("time")) {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);
@@ -138,7 +135,7 @@ public class ClientWindow implements ActionListener {
                         System.exit(0);
                     });
                 } else if (line.equals("not_enough_players")) {
-                    SwingUtilities.invokeLater(() -> {
+                	SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                             "Not enough players joined.\nThe game cannot start.",
                             "Game Cancelled",
@@ -208,7 +205,6 @@ public class ClientWindow implements ActionListener {
                     break;
                 }
             }
-            submit.setEnabled(true);
         }
 
         if (src == poll) {
@@ -221,10 +217,14 @@ public class ClientWindow implements ActionListener {
                 out.println(selectedAnswer);
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
+
+                // Notify server to start 5-second global timer
+                //out.println("submit timer"); debug statement
             } else {
-                gameMessage.setForeground(Color.RED);
+            	gameMessage.setForeground(Color.RED);
                 gameMessage.setText("Please select an answer.");
             }
         }
     }
 }
+

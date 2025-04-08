@@ -28,21 +28,61 @@ public class ClientThread implements Runnable {
         }
     }
 
-    public int getClientID() { return clientID; }
-    public Socket getSocket() { return socket; }
-    public int getScore() { return score; }
-    public void setCorrectAnswer(String correctAnswer) { this.correctAnswer = correctAnswer.toUpperCase(); }
-    public void setCanAnswer(boolean canAnswer) { this.canAnswer = canAnswer; }
-    public boolean getCanAnswer() { return canAnswer; }
-    public void increaseScore(int points) { score += points; }
-    public void decreaseScore(int points) { score -= points; }
-    public void sendMessage(String message) { out.println(message); }
-    public void setJoinedMidGame(boolean joined) { this.joinedMidGame = joined; }
-    public boolean hasJoinedMidGame() { return joinedMidGame; }
-    public int getUnansweredCount() { return unansweredCount; }
-    public void incrementUnanswered() { unansweredCount++; }
-    public void resetUnansweredCount() { unansweredCount = 0; }
+    public int getClientID() {
+        return clientID;
+    }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer.toUpperCase();
+    }
+
+    public void setCanAnswer(boolean canAnswer) {
+        this.canAnswer = canAnswer;
+    }
+
+    public boolean getCanAnswer() {
+        return canAnswer;
+    }
+
+    public void increaseScore(int points) {
+        score += points;
+    }
+
+    public void decreaseScore(int points) {
+        score -= points;
+    }
+
+    public void sendMessage(String message) {
+        out.println(message);
+    }
+
+    public void setJoinedMidGame(boolean joined) {
+        this.joinedMidGame = joined;
+    }
+
+    public boolean hasJoinedMidGame() {
+        return joinedMidGame;
+    }
+    
+    public int getUnansweredCount() {
+    	return unansweredCount;
+    }
+
+    public void incrementUnanswered() {
+    	unansweredCount++;
+    }
+    
+    public void resetUnansweredCount() {
+    	unansweredCount = 0;
+    }
     public void close() {
         try {
             if (in != null) in.close();
@@ -61,35 +101,24 @@ public class ClientThread implements Runnable {
         }
 
         String trimmed = answer.trim().toUpperCase();
-        resetUnansweredCount();
-
+        resetUnansweredCount();//reset missed question count since the player responded
+        
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
             System.out.println("Client-" + clientID + " answered correctly.");
-            canAnswer = false;
-
-            try {
-                TriviaServer.moveAllToNextQuestion();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         } else {
-            canAnswer = false;
-            if (TriviaServer.hasMoreBuzzers()) {
-                sendMessage("WRONG_NEXT");
-                System.out.println("Client-" + clientID + " answered incorrectly. Passing to next.");
-                TriviaServer.allowNextBuzzedClient();
-            } else {
-                decreaseScore(10);
-                sendMessage("wrong " + score);
-                System.out.println("Client-" + clientID + " answered incorrectly. No more buzzers.");
-                try {
-                    TriviaServer.moveAllToNextQuestion();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            decreaseScore(10);
+            sendMessage("wrong " + score);
+            System.out.println("Client-" + clientID + " answered incorrectly.");
+        }
+
+        canAnswer = false;
+
+        try {
+            TriviaServer.moveAllToNextQuestion();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -126,13 +155,17 @@ public class ClientThread implements Runnable {
                         }
                     }
                     TriviaServer.clientOutOfTime(this);
-                } else {
+                }
+
+                else {
                     checkAnswer(message);
                 }
             }
 
+            // 🟡 Graceful exit: readLine() returned null (client quit)
             System.out.println("Client-" + clientID + " readLine() returned null.");
             TriviaServer.removeClient(this);
+            //close();
 
         } catch (IOException | InterruptedException e) {
             System.out.println("Client-" + clientID + " disconnected (exception).");
@@ -144,4 +177,6 @@ public class ClientThread implements Runnable {
             }
         }
     }
+
+	
 }
