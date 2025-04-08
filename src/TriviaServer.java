@@ -115,7 +115,7 @@ public class TriviaServer {
         buzzQueue.clear(); // reset buzz queue for the round
 
         Question q = questions.get(currentQuestionIndex);
-        System.out.println("\n❓ " + q.getQuestionNumber() + ": " + q.getQuestionText());
+        System.out.println("\n " + q.getQuestionNumber() + ": " + q.getQuestionText());
 
         //send questions and options to all clients 
         for (ClientThread client : clients) {
