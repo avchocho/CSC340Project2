@@ -81,9 +81,6 @@ public class ClientWindow implements ActionListener {
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("Welcome Client-")) {
                     updateGameMessage(line, Color.BLUE);
-                    
-                    final String titleText = line.replace("Welcome ", "");
-                    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
                 } else if (line.startsWith("Question")) {
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
@@ -97,7 +94,7 @@ public class ClientWindow implements ActionListener {
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
-                        submit.setEnabled(true);
+                        submit.setEnabled(false); // Wait for answer selection
                         for (JRadioButton option : options) option.setEnabled(true);
                     });
                 } else if (line.startsWith("NAK")) {
@@ -211,6 +208,7 @@ public class ClientWindow implements ActionListener {
                     break;
                 }
             }
+            submit.setEnabled(true);
         }
 
         if (src == poll) {
