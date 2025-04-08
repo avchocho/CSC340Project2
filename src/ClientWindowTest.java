@@ -8,4 +8,3 @@ public class ClientWindowTest {
         new ClientWindow(serverIP, port);
     }
 }
- 
