@@ -202,13 +202,13 @@ public class TriviaServer {
             e.printStackTrace();
         }
 
-        for (ClientThread client : new ArrayList<>(clients)) {
-            try {
-                removeClient(client);
-            } catch (IOException e) {
-                System.out.println("Error removing Client-" + client.getClientID() + ": " + e.getMessage());
-            }
-        }
+//        for (ClientThread client : new ArrayList<>(clients)) {
+//            try {
+//                removeClient(client);
+//            } catch (IOException e) {
+//                System.out.println("Error removing Client-" + client.getClientID() + ": " + e.getMessage());
+//            }
+//        }
 
         if (serverSocket != null && !serverSocket.isClosed()) {
             serverSocket.close();
