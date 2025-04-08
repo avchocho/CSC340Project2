@@ -141,7 +141,17 @@ public class ClientWindow implements ActionListener {
                     updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
                     disableControls();
                 } else if (line.toLowerCase().startsWith("game over")) {
-                    JOptionPane.showMessageDialog(null, line);
+                    // extract final score from message
+                    String[] parts = line.split(":");
+                    if (parts.length == 2) {
+                        try {
+                            userScore = Integer.parseInt(parts[1].trim());
+                        } catch (NumberFormatException e) {
+                            userScore = 0; // fallback
+                        }
+                    }
+                    updateGameMessage("Game Over! Final Score: " + userScore, Color.MAGENTA);
+                    JOptionPane.showMessageDialog(null, "Game Over!\nYour final score: " + userScore);
                     disableControls();
                 } else if (line.equalsIgnoreCase("KILLSWITCH")) {
                 	//server removes the client
