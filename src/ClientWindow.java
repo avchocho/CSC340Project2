@@ -81,6 +81,9 @@ public class ClientWindow implements ActionListener {
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("Welcome Client-")) {
                     updateGameMessage(line, Color.BLUE);
+                    
+                    final String titleText = line.replace("Welcome ", "");
+                    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
                 } else if (line.startsWith("Question")) {
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
