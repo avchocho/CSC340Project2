@@ -75,13 +75,21 @@ public class ClientThread implements Runnable {
                 e.printStackTrace();
             }
         } else {
-            decreaseScore(10);
-            sendMessage("wrong " + score);
-            sendMessage("WRONG_NEXT");
-            System.out.println("Client-" + clientID + " answered incorrectly.");
             canAnswer = false;
-
-            TriviaServer.allowNextBuzzedClient();
+            if (TriviaServer.hasMoreBuzzers()) {
+                sendMessage("WRONG_NEXT");
+                System.out.println("Client-" + clientID + " answered incorrectly. Passing to next.");
+                TriviaServer.allowNextBuzzedClient();
+            } else {
+                decreaseScore(10);
+                sendMessage("wrong " + score);
+                System.out.println("Client-" + clientID + " answered incorrectly. No more buzzers.");
+                try {
+                    TriviaServer.moveAllToNextQuestion();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

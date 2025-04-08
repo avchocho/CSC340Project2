@@ -92,7 +92,7 @@ public class ClientWindow implements ActionListener {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.startsWith("ACK")) {
                     SwingUtilities.invokeLater(() -> {
-                        gameMessage.setText("You won the buzz! You may answer.");
+                        gameMessage.setText("You buzzed first. You may answer.");
                         poll.setEnabled(false);
                         submit.setEnabled(false); // Wait for answer selection
                         for (JRadioButton option : options) option.setEnabled(true);
@@ -113,16 +113,16 @@ public class ClientWindow implements ActionListener {
                     });
                 } else if (line.equals("UNLOCK_POLL")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
+                } else if (line.equalsIgnoreCase("WRONG_NEXT")) {
+                    updateGameMessage("Wrong answer. Moving to next client...", Color.RED);
+                } else if (line.equalsIgnoreCase("YOUR_TURN")) {
+                    updateGameMessage("Previous client incorrect. You now may answer.", Color.BLUE);
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
                     updateGameMessage("Correct answer! +10 points", Color.GREEN);
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
-                    updateGameMessage("Wrong answer! -10 points", Color.RED);
-                } else if (line.equalsIgnoreCase("WRONG_NEXT")) {
-                    updateGameMessage("Wrong. Moving on to next client...", Color.RED);
-                } else if (line.equalsIgnoreCase("YOUR_TURN")) {
-                    updateGameMessage("Previous player incorrect. Your turn!", Color.BLUE);
+                    updateGameMessage("Incorrect answer! -10 points", Color.RED);
                 } else if (line.toLowerCase().startsWith("time")) {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);

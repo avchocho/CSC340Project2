@@ -239,6 +239,13 @@ public class TriviaServer {
         }
     }
 
+    public static boolean hasMoreBuzzers() {
+        synchronized (buzzQueue) {
+            return !buzzQueue.isEmpty();
+        }
+    }
+
+    
     public static void startTimer(int seconds, Runnable onExpire) {
         activeTimer.cancel();
         activeTimer = new Timer();
