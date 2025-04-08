@@ -323,7 +323,7 @@ public class TriviaServer {
         client.incrementUnanswered();
 
         if(client.getUnansweredCount() >= 2) {
-            System.out.println("Client-" + client.getClientID() + " terminated (missed 2 questions in a row)");
+            System.out.println("Client-" + client.getClientID() + " terminated (missed 2 questions)");
             client.sendMessage("killswitch");
             removeClient(client);
         }
