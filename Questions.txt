@@ -1,1 +1,20 @@
-Question 20: Florida Man once tried to rob a bank using what was written on a piece of paper?|'Give me money or I’ll unleash the bees',A picture of a gun,A list of his personal debts,'rob bank' on grocery list|A
+Question 1: A Florida Man was arrested for throwing what at his neighbor during an argument?|A live alligator,A microwave,A bag of Skittles,His pet snake|C
+Question 2: A Florida Man once tried to steal a car, but what unexpected problem stopped him?|He didn’t know how to drive stick shift,He locked himself inside the trunk,He got distracted by a squirrel and forgot,He accidentally stole a police car|A
+Question 3: A Florida Man once got caught trying to break into a house using what as a disguise?|A clear plastic bag over his head,A hollowed-out watermelon,A fake mustache drawn with a Sharpie,A Snuggie worn backwards|A
+Question 4: Police arrested a Florida Man for drunkenly attempting to ride what across a highway?|A giant inflatable flamingo,A motorized shopping cart,An ostrich,A pink lawnmower|B
+Question 5: A Florida Man called 911 because his fast-food order was missing what?|Ketchup,Chicken nuggets,Extra pickles,His dignity|B
+Question 6: A Florida Man was banned from a local park after trying to do what with squirrels?|Teach them karate,Challenge them to a race,Marry one,Build a tiny amusement park for them|A
+Question 7: Police found a Florida Man stuck inside a vending machine after he tried to steal what?|A single bag of Cheetos,A case of Mountain Dew,A bag of peanuts m&m’s,A stuffed alligator toy|D
+Question 8: A Florida Man once faked his own death to avoid what?|Paying his bar tab,Attending his mother-in-law’s birthday party,A parking ticket,Jury duty|C
+Question 9: Florida Man was caught at a McDonald's drive-thru trying to pay with what?|A live iguana,A Monopoly 'Get Out of Jail Free' card,A handful of sand dollars,A homemade debit card made of cardboard|B
+Question 10: A Florida Man was pulled over for driving what vehicle down the interstate at 3 AM?|A stolen ice cream truck,A motorized bathtub,A hot dog-shaped go-kart,A giant rubber duck|B
+Question 11: A Florida Man once got stuck in a storm drain for two days after chasing what into it?|A feral cat,His lost pet parrot,A winning lottery ticket,A Twinkie|D
+Question 12: Florida Man robbed a gas station armed with what unusual weapon?|A banana,A fishing pole,A plunger,A DVD copy of Shrek 2|A
+Question 13: Florida Man was arrested for trying to wrestle what out of a zoo enclosure?|A baby kangaroo,A giant tortoise,A flamingo,An 8-foot python|B
+Question 14: Florida Man broke into a home and did what before leaving?|Cooked breakfast and took a nap,Installed a security system,Reorganized their furniture,Left a thank-you note|A
+Question 15: A Florida Man once got caught smuggling what under his shirt at an airport?|A live chihuahua,A full rack of ribs,10 pounds of oranges,A bottle of ranch dressing|B
+Question 16: A Florida man was caught in a Walmart parking lot trying to do what with his pet lizard?|Teach it to skateboard,Use it to unlock the car door,Hold a tiny boxing match with another lizard.,sell it as a “real baby dragon”|D
+Question 17: A Florida Man ran onto the field during a football game dressed as what?|The Statue of Liberty,A referee, trying to call his own plays,A giant chicken,A full-body fish costume|B
+Question 18: A Florida Man was arrested after calling 911 multiple times to complain about what?|His grandma’s cooking,His pet iguana giving him 'dirty looks',His roommate using his Netflix account,A Taco Bell running out of nacho cheese|D
+Question 19: Florida Man broke into a theme park and was found the next morning doing what?|Riding a roller coaster alone,Feeding an alligator a cheeseburger,Having a lightsaber duel with himself,Swimming in the dolphin exhibit|C
+Question 20: Florida Man once tried to rob a bank using what was written on a piece of paper?|'Give me money or I’ll unleash the bees',A picture of a gun,A list of his personal debts,'Rob bank' on a grocery list|A
