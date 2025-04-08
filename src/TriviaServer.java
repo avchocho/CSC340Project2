@@ -173,29 +173,44 @@ public class TriviaServer {
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : new ArrayList<>(clients)) {
-            client.sendMessage("FINAL_SCORE:" + client.getScore());
-            client.sendMessage("Game Over!");
-            System.out.println("Client " + client.getClientID() + ": " + client.getScore());
+            try {
+                client.sendMessage("FINAL_SCORE:" + client.getScore());
+                client.sendMessage("Game Over!");
+                System.out.println("Client " + client.getClientID() + ": " + client.getScore());
+            } catch (Exception e) {
+                System.out.println("Error sending final score to Client-" + client.getClientID() + ": " + e.getMessage());
+            }
         }
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1000); // let messages flush
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+        // Safely close clients
         for (ClientThread client : new ArrayList<>(clients)) {
-            removeClient(client);
+            try {
+                removeClient(client);
+            } catch (IOException e) {
+                System.out.println("Error removing Client-" + client.getClientID() + ": " + e.getMessage());
+            }
         }
 
-        if (serverSocket != null && !serverSocket.isClosed()) {
-            serverSocket.close();
+        // Shut down server
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            System.out.println("Error closing server socket: " + e.getMessage());
         }
 
-        pool.shutdown();
+        pool.shutdownNow();
         System.out.println("Server shutting down");
         System.exit(0);
     }
+
 
     private static void loadQuestions() {
         try (BufferedReader br = new BufferedReader(new FileReader("Questions.txt"))) {
