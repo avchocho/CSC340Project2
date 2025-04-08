@@ -92,7 +92,7 @@ public class ClientWindow implements ActionListener {
                 if (line.startsWith("Welcome Client-")) {
                     updateGameMessage(line, Color.BLUE);
                     final String titleText = line.replace("Welcome ", "");
-                    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
+                    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server: " + titleText));
                 } else if (line.startsWith("Question")) {
                     // Read and display full question with options
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
@@ -252,3 +252,4 @@ public class ClientWindow implements ActionListener {
         }
     }
 }
+

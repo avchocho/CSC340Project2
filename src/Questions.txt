@@ -14,7 +14,11 @@ Question 13: Florida Man was arrested for trying to wrestle what out of a zoo en
 Question 14: Florida Man broke into a home and did what before leaving?|Cooked breakfast and took a nap,Installed a security system,Reorganized their furniture,Left a thank-you note|A
 Question 15: A Florida Man once got caught smuggling what under his shirt at an airport?|A live chihuahua,A full rack of ribs,10 pounds of oranges,A bottle of ranch dressing|B
 Question 16: A Florida man was caught in a Walmart parking lot trying to do what with his pet lizard?|Teach it to skateboard,Use it to unlock the car door,Hold a tiny boxing match with another lizard.,sell it as a “real baby dragon”|D
+<<<<<<< HEAD
 Question 17: A Florida Man ran onto the field during a football game dressed as what?|The Statue of Liberty,A referee, trying to call his own plays,A giant chicken,A full-body fish costume|B
+=======
+Question 17: A Florida Man ran onto the field during a football game dressed as what?|The Statue of Liberty,A referee trying to call his own plays,A giant chicken,A full-body fish costume|B
+>>>>>>> branch 'main' of git@github.com:avchocho/CSC340Project2.git
 Question 18: A Florida Man was arrested after calling 911 multiple times to complain about what?|His grandma’s cooking,His pet iguana giving him 'dirty looks',His roommate using his Netflix account,A Taco Bell running out of nacho cheese|D
 Question 19: Florida Man broke into a theme park and was found the next morning doing what?|Riding a roller coaster alone,Feeding an alligator a cheeseburger,Having a lightsaber duel with himself,Swimming in the dolphin exhibit|C
 Question 20: Florida Man once tried to rob a bank using what was written on a piece of paper?|'Give me money or I’ll unleash the bees',A picture of a gun,A list of his personal debts,'Rob bank' on a grocery list|A
