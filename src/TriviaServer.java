@@ -187,22 +187,10 @@ public class TriviaServer {
         System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
-     // Build scoreboard string to send to each client
-        StringBuilder scoreboard = new StringBuilder("GAME_OVER\n");
-        for (ClientThread client : clients) {
-            scoreboard.append("Client-")
-                      .append(client.getClientID())
-                      .append(": ")
-                      .append(client.getScore())
-                      .append("\n");
-        }
-
-        // Print and send to each client
-        System.out.println("\nGame Over. Final Scores:");
         for (ClientThread client : new ArrayList<>(clients)) {
-            System.out.println("Client-" + client.getClientID() + ": " + client.getScore());
-            client.sendMessage(scoreboard.toString().trim());
-            removeClient(client);
+            client.sendMessage("Game Over! Your final score: " + client.getScore());
+            System.out.println("Client " + client.getClientID() + ": " + client.getScore());
+            removeClient(client);  // this calls close() which prints disconnect
         }
         //shutting down server after game ends
         if(serverSocket != null && !serverSocket.isClosed()) {
@@ -338,4 +326,4 @@ public class TriviaServer {
     public static void moveAllToNextQuestion() throws IOException {
         sendNextQuestionToAll();
     }
-}
+} 
