@@ -140,18 +140,30 @@ public class ClientWindow implements ActionListener {
                 	//for clients who joined late
                     updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
                     disableControls();
-                } else if (line.toLowerCase().startsWith("game over")) {
-                    // extract final score from message
-                    String[] parts = line.split(":");
-                    if (parts.length == 2) {
-                        try {
-                            userScore = Integer.parseInt(parts[1].trim());
-                        } catch (NumberFormatException e) {
-                            userScore = 0; // fallback
+                } else if (line.equalsIgnoreCase("GAME_OVER")) {
+                    // Start collecting scoreboard lines
+                    StringBuilder scoreboard = new StringBuilder("Final Scores:\n");
+                    String nextLine;
+
+                    while ((nextLine = in.readLine()) != null && !nextLine.trim().isEmpty()) {
+                        scoreboard.append(nextLine).append("\n");
+
+                        // Optionally sync userScore if this is OUR line
+                        if (nextLine.contains(window.getTitle().replace("Trivia Server - ", ""))) {
+                            String[] parts = nextLine.split(":");
+                            if (parts.length == 2) {
+                                try {
+                                    userScore = Integer.parseInt(parts[1].trim());
+                                } catch (NumberFormatException e) {
+                                    userScore = 0;
+                                }
+                            }
                         }
                     }
-                    updateGameMessage("Game Over! Final Score: " + userScore, Color.MAGENTA);
-                    JOptionPane.showMessageDialog(null, "Game Over!\nYour final score: " + userScore);
+
+                    // Update the score label to match final score
+                    updateGameMessage("Game Over. Final Score: " + userScore, Color.MAGENTA);
+                    JOptionPane.showMessageDialog(null, scoreboard.toString(), "Final Scores", JOptionPane.INFORMATION_MESSAGE);
                     disableControls();
                 } else if (line.equalsIgnoreCase("KILLSWITCH")) {
                 	//server removes the client
