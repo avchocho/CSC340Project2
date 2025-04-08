@@ -107,6 +107,76 @@ public class TriviaServer {
     }
 
     // Sends the next trivia question to all clients
+//    public static void sendNextQuestionToAll() throws IOException {
+//        if (currentQuestionIndex >= questions.size()) {
+//            endGame();
+//            return;
+//        }
+//
+//        receivingBuzzes = true;
+//        buzzQueue.clear();
+//
+//        Question q = questions.get(currentQuestionIndex);
+//        System.out.println("\n " + q.getQuestionNumber() + ": " + q.getQuestionText());
+//
+//        for (ClientThread client : clients) {
+//            client.setCanAnswer(false);
+//            client.setCorrectAnswer(String.valueOf(q.getCorrectAnswer()));
+//
+//            client.sendMessage(q.getQuestionNumber() + ":");
+//            client.sendMessage(q.getQuestionText());
+//            client.sendMessage("A. " + q.getOptions()[0]);
+//            client.sendMessage("B. " + q.getOptions()[1]);
+//            client.sendMessage("C. " + q.getOptions()[2]);
+//            client.sendMessage("D. " + q.getOptions()[3]);
+//            client.sendMessage("Your Answer:");
+//        }
+//
+//        currentQuestionIndex++;
+//
+//        // Start 15-second timer for players to buzz in
+//        startTimer(15, () -> {
+//            receivingBuzzes = false;
+//
+//            if (!buzzQueue.isEmpty()) {
+//                ClientThread winner;
+//                synchronized (buzzQueue) {
+//                    winner = buzzQueue.poll();
+//                }
+//
+//                winner.setCanAnswer(true);
+//                winner.sendMessage("ACK");
+//                System.out.println("Client-" + winner.getClientID() + " buzzed first and may answer.");
+//
+//                for (ClientThread client : clients) {
+//                    if (client != winner) {
+//                        client.sendMessage("NAK");
+//                    }
+//                }
+//
+//                // Start 10-second timer for answering
+//                startTimer(10, () -> {
+//                    try {
+//                        clientOutOfTime(winner);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
+//
+//            } else {
+//                System.out.println("No one buzzed in. Skipping to next question.");
+//                for (ClientThread client : clients) {
+//                    client.sendMessage("Time expired");
+//                }
+//
+//                try {
+//                    sendNextQuestionToAll();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//    }
     public static void sendNextQuestionToAll() throws IOException {
         if (currentQuestionIndex >= questions.size()) {
             endGame();
@@ -132,9 +202,8 @@ public class TriviaServer {
             client.sendMessage("Your Answer:");
         }
 
-        currentQuestionIndex++;
+        // DO NOT increment here — let the timers decide when it's safe
 
-        // Start 15-second timer for players to buzz in
         startTimer(15, () -> {
             receivingBuzzes = false;
 
@@ -154,9 +223,10 @@ public class TriviaServer {
                     }
                 }
 
-                // Start 10-second timer for answering
+                // Answer phase timer
                 startTimer(10, () -> {
                     try {
+                        currentQuestionIndex++; // ✅ Increment only when done with this question
                         clientOutOfTime(winner);
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -170,6 +240,7 @@ public class TriviaServer {
                 }
 
                 try {
+                    currentQuestionIndex++; // ✅ Also increment here if no one buzzed
                     sendNextQuestionToAll();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -177,6 +248,7 @@ public class TriviaServer {
             }
         });
     }
+
 
     // Ends the game and displays final scores
     private static void endGame() throws IOException {
