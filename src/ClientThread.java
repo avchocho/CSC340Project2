@@ -28,61 +28,20 @@ public class ClientThread implements Runnable {
         }
     }
 
-    public int getClientID() {
-        return clientID;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public void setCorrectAnswer(String correctAnswer) {
-        this.correctAnswer = correctAnswer.toUpperCase();
-    }
-
-    public void setCanAnswer(boolean canAnswer) {
-        this.canAnswer = canAnswer;
-    }
-
-    public boolean getCanAnswer() {
-        return canAnswer;
-    }
-
-    public void increaseScore(int points) {
-        score += points;
-    }
-
-    public void decreaseScore(int points) {
-        score -= points;
-    }
-
-    public void sendMessage(String message) {
-        out.println(message);
-    }
-
-    public void setJoinedMidGame(boolean joined) {
-        this.joinedMidGame = joined;
-    }
-
-    public boolean hasJoinedMidGame() {
-        return joinedMidGame;
-    }
-
-    public int getUnansweredCount() {
-        return unansweredCount;
-    }
-
-    public void incrementUnanswered() {
-        unansweredCount++;
-    }
-
-    public void resetUnansweredCount() {
-        unansweredCount = 0;
-    }
+    public int getClientID() { return clientID; }
+    public Socket getSocket() { return socket; }
+    public int getScore() { return score; }
+    public void setCorrectAnswer(String correctAnswer) { this.correctAnswer = correctAnswer.toUpperCase(); }
+    public void setCanAnswer(boolean canAnswer) { this.canAnswer = canAnswer; }
+    public boolean getCanAnswer() { return canAnswer; }
+    public void increaseScore(int points) { score += points; }
+    public void decreaseScore(int points) { score -= points; }
+    public void sendMessage(String message) { out.println(message); }
+    public void setJoinedMidGame(boolean joined) { this.joinedMidGame = joined; }
+    public boolean hasJoinedMidGame() { return joinedMidGame; }
+    public int getUnansweredCount() { return unansweredCount; }
+    public void incrementUnanswered() { unansweredCount++; }
+    public void resetUnansweredCount() { unansweredCount = 0; }
 
     public void close() {
         try {
@@ -118,10 +77,10 @@ public class ClientThread implements Runnable {
         } else {
             decreaseScore(10);
             sendMessage("wrong " + score);
+            sendMessage("WRONG_NEXT");
             System.out.println("Client-" + clientID + " answered incorrectly.");
             canAnswer = false;
 
-            // Move to next buzzer (if within 2 attempts)
             TriviaServer.allowNextBuzzedClient();
         }
     }
