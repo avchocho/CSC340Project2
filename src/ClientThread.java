@@ -71,18 +71,19 @@ public class ClientThread implements Runnable {
     public boolean hasJoinedMidGame() {
         return joinedMidGame;
     }
-    
+
     public int getUnansweredCount() {
-    	return unansweredCount;
+        return unansweredCount;
     }
 
     public void incrementUnanswered() {
-    	unansweredCount++;
+        unansweredCount++;
     }
-    
+
     public void resetUnansweredCount() {
-    	unansweredCount = 0;
+        unansweredCount = 0;
     }
+
     public void close() {
         try {
             if (in != null) in.close();
@@ -101,24 +102,27 @@ public class ClientThread implements Runnable {
         }
 
         String trimmed = answer.trim().toUpperCase();
-        resetUnansweredCount();//reset missed question count since the player responded
-        
+        resetUnansweredCount();
+
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
             System.out.println("Client-" + clientID + " answered correctly.");
+            canAnswer = false;
+
+            try {
+                TriviaServer.moveAllToNextQuestion();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             decreaseScore(10);
             sendMessage("wrong " + score);
             System.out.println("Client-" + clientID + " answered incorrectly.");
-        }
+            canAnswer = false;
 
-        canAnswer = false;
-
-        try {
-            TriviaServer.moveAllToNextQuestion();
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Move to next buzzer (if within 2 attempts)
+            TriviaServer.allowNextBuzzedClient();
         }
     }
 
@@ -155,17 +159,13 @@ public class ClientThread implements Runnable {
                         }
                     }
                     TriviaServer.clientOutOfTime(this);
-                }
-
-                else {
+                } else {
                     checkAnswer(message);
                 }
             }
 
-            // 🟡 Graceful exit: readLine() returned null (client quit)
             System.out.println("Client-" + clientID + " readLine() returned null.");
             TriviaServer.removeClient(this);
-            //close();
 
         } catch (IOException | InterruptedException e) {
             System.out.println("Client-" + clientID + " disconnected (exception).");
@@ -177,6 +177,4 @@ public class ClientThread implements Runnable {
             }
         }
     }
-
-	
 }
