@@ -17,6 +17,7 @@ public class ClientWindow implements ActionListener {
     private PrintWriter out;
     private String selectedAnswer = "";
 
+    // Constructor that initializes the GUI and connects to the server
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
         window.setSize(400, 400);
@@ -24,10 +25,12 @@ public class ClientWindow implements ActionListener {
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
 
+        // Question label
         question = new JLabel("Waiting for question...");
         question.setBounds(10, 5, 350, 100);
         window.add(question);
 
+        // Multiple-choice options
         options = new JRadioButton[4];
         optionGroup = new ButtonGroup();
         for (int i = 0; i < 4; i++) {
@@ -39,24 +42,29 @@ public class ClientWindow implements ActionListener {
             window.add(options[i]);
         }
 
+        // Score label
         score = new JLabel("Score: " + userScore);
         score.setBounds(50, 250, 100, 20);
         window.add(score);
 
+        // Timer label
         timer = new JLabel("Timer");
         timer.setBounds(250, 250, 100, 20);
         window.add(timer);
 
+        // Message label to display game status
         gameMessage = new JLabel("");
         gameMessage.setBounds(10, 220, 350, 20);
         window.add(gameMessage);
 
+        // Poll button to buzz in
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
         poll.addActionListener(this);
         poll.setEnabled(false);
         window.add(poll);
 
+        // Submit button to send selected answer
         submit = new JButton("Submit");
         submit.setBounds(200, 300, 100, 20);
         submit.addActionListener(this);
@@ -65,6 +73,7 @@ public class ClientWindow implements ActionListener {
 
         window.setVisible(true);
 
+        // Connect to server and start listener thread
         try {
             socket = new Socket(serverIP, port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -75,6 +84,7 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    // Listens to server messages and updates GUI accordingly
     private void listenToServer() {
         try {
             String line;
@@ -84,6 +94,7 @@ public class ClientWindow implements ActionListener {
                     final String titleText = line.replace("Welcome ", "");
                     SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
                 } else if (line.startsWith("Question")) {
+                    // Read and display full question with options
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
@@ -93,6 +104,7 @@ public class ClientWindow implements ActionListener {
                 } else if (line.startsWith("Your Answer")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.startsWith("ACK")) {
+                    // Client won the buzz
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
@@ -100,6 +112,7 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(true);
                     });
                 } else if (line.startsWith("NAK")) {
+                    // Another client buzzed first
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
@@ -107,6 +120,7 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(false);
                     });
                 } else if (line.startsWith("TIMER:")) {
+                    // Update timer label
                     String time = line.split(":")[1];
                     SwingUtilities.invokeLater(() -> {
                         int seconds = Integer.parseInt(time);
@@ -157,6 +171,7 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    // Updates game message label with color and message
     private void updateGameMessage(String msg, Color color) {
         SwingUtilities.invokeLater(() -> {
             gameMessage.setForeground(color);
@@ -165,6 +180,7 @@ public class ClientWindow implements ActionListener {
         });
     }
 
+    // Disables all interactive buttons and radio options
     private void disableControls() {
         SwingUtilities.invokeLater(() -> {
             poll.setEnabled(false);
@@ -173,6 +189,7 @@ public class ClientWindow implements ActionListener {
         });
     }
 
+    // Displays a new question and resets UI components
     private void displayQuestion(String fullText) {
         SwingUtilities.invokeLater(() -> {
             String[] lines = fullText.split("\n");
@@ -190,6 +207,7 @@ public class ClientWindow implements ActionListener {
         });
     }
 
+    // Sends a UDP buzz packet to the server
     private void sendUDPBuzz() {
         try {
             byte[] buffer = "buzz".getBytes();
@@ -203,6 +221,7 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    // Handles user actions from GUI components
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
