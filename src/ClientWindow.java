@@ -16,7 +16,6 @@ public class ClientWindow implements ActionListener {
     private BufferedReader in;
     private PrintWriter out;
     private String selectedAnswer = "";
-    private int currQuestionIndex = -1;
 
     // Constructor that initializes the GUI and connects to the server
     public ClientWindow(String serverIP, int port) {
@@ -94,15 +93,8 @@ public class ClientWindow implements ActionListener {
                     updateGameMessage(line, Color.BLUE);
                     final String titleText = line.replace("Welcome ", "");
                     SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
-//                } else if (line.startsWith("Question")) {
-//                    // Read and display full question with options
-//                    StringBuilder fullQuestion = new StringBuilder(line).append("\n");
-//                    for (int i = 0; i < 5; i++) {
-//                        String nextLine = in.readLine();
-//                        if (nextLine != null) fullQuestion.append(nextLine).append("\n");
-//                    }
-//                    displayQuestion(fullQuestion.toString());
                 } else if (line.startsWith("Question")) {
+                    // Read and display full question with options
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
@@ -216,23 +208,9 @@ public class ClientWindow implements ActionListener {
     }
 
     // Sends a UDP buzz packet to the server
-//    private void sendUDPBuzz() {
-//        try {
-//            byte[] buffer = "buzz".getBytes();
-//            DatagramSocket udpSocket = new DatagramSocket();
-//            InetAddress serverAddress = socket.getInetAddress();
-//            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, 1235);
-//            udpSocket.send(packet);
-//            udpSocket.close();
-//        } catch (IOException e) {
-//            System.out.println("UDP Buzz failed");
-//        }
-//    }
     private void sendUDPBuzz() {
         try {
-            String buzzMessage = "buzz:" + currQuestionIndex;
-            byte[] buffer = buzzMessage.getBytes();
-
+            byte[] buffer = "buzz".getBytes();
             DatagramSocket udpSocket = new DatagramSocket();
             InetAddress serverAddress = socket.getInetAddress();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, 1235);
@@ -242,7 +220,6 @@ public class ClientWindow implements ActionListener {
             System.out.println("UDP Buzz failed");
         }
     }
-
 
     // Handles user actions from GUI components
     @Override
@@ -275,3 +252,4 @@ public class ClientWindow implements ActionListener {
         }
     }
 }
+
