@@ -79,12 +79,9 @@ public class ClientWindow implements ActionListener {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-            	
-            	if(line.startsWith("Welcome Client-")) {
-            		updateGameMessage(line, Color.BLUE);
-            		final String titleText = line.replace("Welcome ", "");
-            	    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
-            	} else if (line.startsWith("Question")) {
+                if (line.startsWith("Welcome Client-")) {
+                    updateGameMessage(line, Color.BLUE);
+                } else if (line.startsWith("Question")) {
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
@@ -122,6 +119,10 @@ public class ClientWindow implements ActionListener {
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
                     updateGameMessage("Wrong answer! -10 points", Color.RED);
+                } else if (line.equalsIgnoreCase("WRONG_NEXT")) {
+                    updateGameMessage("Wrong. Moving on to next client...", Color.RED);
+                } else if (line.equalsIgnoreCase("YOUR_TURN")) {
+                    updateGameMessage("Previous player incorrect. Your turn!", Color.BLUE);
                 } else if (line.toLowerCase().startsWith("time")) {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);
@@ -137,7 +138,7 @@ public class ClientWindow implements ActionListener {
                         System.exit(0);
                     });
                 } else if (line.equals("not_enough_players")) {
-                	SwingUtilities.invokeLater(() -> {
+                    SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                             "Not enough players joined.\nThe game cannot start.",
                             "Game Cancelled",
@@ -219,11 +220,8 @@ public class ClientWindow implements ActionListener {
                 out.println(selectedAnswer);
                 submit.setEnabled(false);
                 for (JRadioButton option : options) option.setEnabled(false);
-
-                // Notify server to start 5-second global timer
-                //out.println("submit timer"); debug statement
             } else {
-            	gameMessage.setForeground(Color.RED);
+                gameMessage.setForeground(Color.RED);
                 gameMessage.setText("Please select an answer.");
             }
         }

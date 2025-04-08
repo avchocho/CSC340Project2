@@ -156,6 +156,7 @@ public class TriviaServer {
             currentAttemptCount++;
             next.setCanAnswer(true);
             next.sendMessage("ACK");
+            next.sendMessage("YOUR_TURN");
             System.out.println("🎯 Client-" + next.getClientID() + " buzzed and may answer.");
 
             for (ClientThread client : clients) {
@@ -183,6 +184,7 @@ public class TriviaServer {
             }
         }
     }
+
 
     private static void loadQuestions() {
         try (BufferedReader br = new BufferedReader(new FileReader("Questions.txt"))) {
