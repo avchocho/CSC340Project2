@@ -188,19 +188,32 @@ public class TriviaServer {
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : new ArrayList<>(clients)) {
-            client.sendMessage("Game Over! Your final score: " + client.getScore());
+            client.sendMessage("FINAL_SCORE:" + client.getScore());
+            client.sendMessage("Game Over!");
             System.out.println("Client " + client.getClientID() + ": " + client.getScore());
-            removeClient(client);  // this calls close() which prints disconnect
         }
-        //shutting down server after game ends
-        if(serverSocket != null && !serverSocket.isClosed()) {
-        	serverSocket.close(); //stop accepting new clients
+
+        // Wait briefly to ensure clients receive the final messages
+        try {
+            Thread.sleep(1000);  // 1 second should be enough
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        
-        pool.shutdown();//stop all running client threads
+
+        // Now safely remove clients
+        for (ClientThread client : new ArrayList<>(clients)) {
+            removeClient(client);
+        }
+
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            serverSocket.close();
+        }
+
+        pool.shutdown();
         System.out.println("Server shutting down");
         System.exit(0);
     }
+
     //load questions from text file
     private static void loadQuestions() {
         try (BufferedReader br = new BufferedReader(new FileReader("Questions.txt"))) {
@@ -326,4 +339,4 @@ public class TriviaServer {
     public static void moveAllToNextQuestion() throws IOException {
         sendNextQuestionToAll();
     }
-} 
+}

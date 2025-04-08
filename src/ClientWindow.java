@@ -141,19 +141,20 @@ public class ClientWindow implements ActionListener {
                     updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
                     disableControls();
                 } else if (line.toLowerCase().startsWith("game over")) {
-                    // Parse and update userScore from the message
-                    try {
-                        String[] parts = line.split(":");
-                        if (parts.length == 2) {
-                            userScore = Integer.parseInt(parts[1].trim());
-                        }
-                    } catch (Exception ex) {
-                        System.out.println("Failed to parse final score: " + line);
-                    }
-
-                    updateGameMessage("Game Over. Final Score: " + userScore, Color.MAGENTA);
-                    JOptionPane.showMessageDialog(null, line, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+                    // Don't show popup — just disable controls and update message
+                    updateGameMessage("Game Over. Final scores coming...", Color.MAGENTA);
                     disableControls();
+                } else if (line.startsWith("FINAL_SCORE:")) {
+                    try {
+                        userScore = Integer.parseInt(line.split(":")[1].trim());
+                        SwingUtilities.invokeLater(() -> {
+                            score.setText("Score: " + userScore);
+                            gameMessage.setForeground(Color.MAGENTA);
+                            gameMessage.setText("Final Score: " + userScore);
+                        });
+                    } catch (NumberFormatException ex) {
+                        System.out.println("Failed to parse FINAL_SCORE line: " + line);
+                    }
                 } else if (line.equalsIgnoreCase("KILLSWITCH")) {
                 	//server removes the client
                     SwingUtilities.invokeLater(() -> {
