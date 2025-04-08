@@ -197,7 +197,7 @@ public class TriviaServer {
         }
 
         try {
-            Thread.sleep(1000); // Allow time for clients to receive messages
+            Thread.sleep(10); // Allow time for clients to receive messages
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
