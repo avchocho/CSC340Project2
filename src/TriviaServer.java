@@ -97,7 +97,7 @@ public class TriviaServer {
                     pool.shutdownNow();
                     System.exit(0);
                 } else {
-                    System.out.println("🎮 Starting Trivia Game!");
+                    System.out.println("Starting Trivia Game!");
                     sendNextQuestionToAll();
                 }
             }
@@ -134,7 +134,7 @@ public class TriviaServer {
 
         currentQuestionIndex++;
 
-        // 🕓 Start 15-second poll timer
+        // Start 15-second poll timer
         startTimer(15, () -> {
             receivingBuzzes = false;
 
@@ -146,7 +146,7 @@ public class TriviaServer {
 
                 winner.setCanAnswer(true);
                 winner.sendMessage("ACK");
-                System.out.println("🎯 Client-" + winner.getClientID() + " buzzed first and may answer.");
+                System.out.println("Client-" + winner.getClientID() + " buzzed first and may answer.");
 
                 for (ClientThread client : clients) {
                     if (client != winner) {
@@ -154,7 +154,7 @@ public class TriviaServer {
                     }
                 }
 
-                // ⏱️ Start 10-second answer timer
+                // Start 10-second answer timer
                 startTimer(10, () -> {
                     try {
                         clientOutOfTime(winner);
@@ -184,7 +184,7 @@ public class TriviaServer {
         if (hasPrintedWinners) return;
         hasPrintedWinners = true;
 
-        System.out.println("\n🏁 Game Over. Final Scores:");
+        System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : new ArrayList<>(clients)) {
@@ -200,12 +200,6 @@ public class TriviaServer {
         pool.shutdown();//stop all running client threads
         System.out.println("Server shutting down");
         System.exit(0);
-
-//        //  shutdown after all clients leave at end of game - will change
-//        serverSocket.close();       
-//        pool.shutdownNow();         // stop all client threads
-//        System.out.println("Server shutting down.");
-//        System.exit(0);             // end process
     }
 
     private static void loadQuestions() {
@@ -236,16 +230,16 @@ public class TriviaServer {
                             synchronized (TriviaServer.buzzQueue) {
                                 if (!TriviaServer.buzzQueue.contains(client)) {
                                     TriviaServer.buzzQueue.offer(client);
-                                    System.out.println("✅ Client-" + client.getClientID() + " buzzed.");
+                                    System.out.println("Client-" + client.getClientID() + " buzzed.");
                                 }
                             }
                         } else {
-                            System.out.println("⚠️ No matching client found for UDP address: " + address);
+                            System.out.println("No matching client found for UDP address: " + address);
                         }
                     }
                 }
             } catch (IOException e) {
-                System.out.println("❌ UDP Thread error: " + e.getMessage());
+                System.out.println("UDP Thread error: " + e.getMessage());
             }
         }
 
