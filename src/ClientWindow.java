@@ -17,6 +17,7 @@ public class ClientWindow implements ActionListener {
     private PrintWriter out;
     private String selectedAnswer = "";
 
+    //initialize the game window
     public ClientWindow(String serverIP, int port) {
         window = new JFrame("Trivia Game");
         window.setSize(400, 400);
@@ -24,6 +25,7 @@ public class ClientWindow implements ActionListener {
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
 
+        //question display
         question = new JLabel("Waiting for question...");
         question.setBounds(10, 5, 350, 100);
         window.add(question);
@@ -51,12 +53,14 @@ public class ClientWindow implements ActionListener {
         gameMessage.setBounds(10, 220, 350, 20);
         window.add(gameMessage);
 
+        //button to buzz in
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
         poll.addActionListener(this);
         poll.setEnabled(false);
         window.add(poll);
 
+        //button to submit answe
         submit = new JButton("Submit");
         submit.setBounds(200, 300, 100, 20);
         submit.addActionListener(this);
@@ -65,6 +69,7 @@ public class ClientWindow implements ActionListener {
 
         window.setVisible(true);
 
+        //connect to server
         try {
             socket = new Socket(serverIP, port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -75,6 +80,7 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    //continuously listen to messages from server
     private void listenToServer() {
         try {
             String line;
@@ -85,6 +91,7 @@ public class ClientWindow implements ActionListener {
             		final String titleText = line.replace("Welcome ", "");
             	    SwingUtilities.invokeLater(() -> window.setTitle("Trivia Server - " + titleText));
             	} else if (line.startsWith("Question")) {
+            		//read multi-line question and options
                     StringBuilder fullQuestion = new StringBuilder(line).append("\n");
                     for (int i = 0; i < 5; i++) {
                         String nextLine = in.readLine();
@@ -94,6 +101,7 @@ public class ClientWindow implements ActionListener {
                 } else if (line.startsWith("Your Answer")) {
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.startsWith("ACK")) {
+                	//this client buzzed first
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("You won the buzz! You may answer.");
                         poll.setEnabled(false);
@@ -101,6 +109,7 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(true);
                     });
                 } else if (line.startsWith("NAK")) {
+                	//another client buzzed first
                     SwingUtilities.invokeLater(() -> {
                         gameMessage.setText("Too late! Another player buzzed first.");
                         poll.setEnabled(false);
@@ -108,6 +117,7 @@ public class ClientWindow implements ActionListener {
                         for (JRadioButton option : options) option.setEnabled(false);
                     });
                 } else if (line.startsWith("TIMER:")) {
+                	//update timer
                     String time = line.split(":")[1];
                     SwingUtilities.invokeLater(() -> {
                         int seconds = Integer.parseInt(time);
@@ -115,6 +125,7 @@ public class ClientWindow implements ActionListener {
                         timer.setText("Time: " + seconds);
                     });
                 } else if (line.equals("UNLOCK_POLL")) {
+                	//reset poll for next round
                     SwingUtilities.invokeLater(() -> poll.setEnabled(true));
                 } else if (line.toLowerCase().startsWith("correct")) {
                     userScore += 10;
@@ -126,17 +137,20 @@ public class ClientWindow implements ActionListener {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);
                 } else if (line.contains("WaitForNextRound")) {
+                	//for clients who joined late
                     updateGameMessage("You joined mid-game. Wait for the next question.", Color.BLUE);
                     disableControls();
                 } else if (line.toLowerCase().startsWith("game over")) {
                     JOptionPane.showMessageDialog(null, line);
                     disableControls();
                 } else if (line.equalsIgnoreCase("KILLSWITCH")) {
+                	//server removes the client
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null, "You have been removed from the game.");
                         System.exit(0);
                     });
                 } else if (line.equals("not_enough_players")) {
+                	//server shuts down bc not enough players to start game
                 	SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                             "Not enough players joined.\nThe game cannot start.",
@@ -151,6 +165,7 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    //update game status message and score
     private void updateGameMessage(String msg, Color color) {
         SwingUtilities.invokeLater(() -> {
             gameMessage.setForeground(color);
@@ -159,6 +174,7 @@ public class ClientWindow implements ActionListener {
         });
     }
 
+    //disable interactive buttons
     private void disableControls() {
         SwingUtilities.invokeLater(() -> {
             poll.setEnabled(false);
@@ -166,17 +182,21 @@ public class ClientWindow implements ActionListener {
             for (JRadioButton option : options) option.setEnabled(false);
         });
     }
-
+    
+    //displays new question and reset UI
     private void displayQuestion(String fullText) {
         SwingUtilities.invokeLater(() -> {
             String[] lines = fullText.split("\n");
             if (lines.length < 6) return;
+            //first line is the question header, second line is the text
             question.setText("<html><b>" + lines[0] + "</b><br>" + lines[1] + "</html>");
+            //set the option labels
             for (int i = 0; i < 4; i++) {
                 options[i].setText(lines[i + 2]);
                 options[i].setEnabled(false);
                 options[i].setSelected(false);
             }
+            //reset selections
             optionGroup.clearSelection();
             selectedAnswer = "";
             poll.setEnabled(true);
@@ -184,6 +204,7 @@ public class ClientWindow implements ActionListener {
         });
     }
 
+    //sends a buzz message to the server via UDP
     private void sendUDPBuzz() {
         try {
             byte[] buffer = "buzz".getBytes();
@@ -197,9 +218,12 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+    //handles all button clicks and radio selection
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
+        
+        //handle answer selection
         if (src instanceof JRadioButton) {
             for (int i = 0; i < options.length; i++) {
                 if (options[i].isSelected()) {
@@ -209,11 +233,13 @@ public class ClientWindow implements ActionListener {
             }
         }
 
+        //handle polls
         if (src == poll) {
             sendUDPBuzz();
             poll.setEnabled(true);
         }
 
+        //handle submit
         if (src == submit) {
             if (!selectedAnswer.isEmpty()) {
                 out.println(selectedAnswer);
@@ -221,7 +247,7 @@ public class ClientWindow implements ActionListener {
                 for (JRadioButton option : options) option.setEnabled(false);
 
                 // Notify server to start 5-second global timer
-                //out.println("submit timer"); debug statement
+                
             } else {
             	gameMessage.setForeground(Color.RED);
                 gameMessage.setText("Please select an answer.");

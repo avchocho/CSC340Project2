@@ -12,6 +12,7 @@ public class ClientThread implements Runnable {
     private boolean joinedMidGame = false;
     private int unansweredCount = 0;
 
+    //initializes client state 
     public ClientThread(Socket socket, int id) {
         this.socket = socket;
         this.clientID = id;
@@ -19,14 +20,18 @@ public class ClientThread implements Runnable {
         this.canAnswer = false;
 
         try {
+        	//set up input and output communication
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
+            
+            //send welcome and initial score
             sendMessage("Welcome Client-" + clientID);
             sendMessage("score " + score);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    //getters and setters
 
     public int getClientID() {
         return clientID;
@@ -83,6 +88,7 @@ public class ClientThread implements Runnable {
     public void resetUnansweredCount() {
     	unansweredCount = 0;
     }
+    //close this client's resources
     public void close() {
         try {
             if (in != null) in.close();
@@ -94,6 +100,7 @@ public class ClientThread implements Runnable {
         }
     }
 
+    //evaluates and processes a submitted answer
     private void checkAnswer(String answer) {
         if (!canAnswer) {
             sendMessage("You are not allowed to answer.");
@@ -103,6 +110,7 @@ public class ClientThread implements Runnable {
         String trimmed = answer.trim().toUpperCase();
         resetUnansweredCount();//reset missed question count since the player responded
         
+        //check correctness
         if (trimmed.equals(correctAnswer)) {
             increaseScore(10);
             sendMessage("correct " + score);
@@ -113,8 +121,9 @@ public class ClientThread implements Runnable {
             System.out.println("Client-" + clientID + " answered incorrectly.");
         }
 
-        canAnswer = false;
+        canAnswer = false; //client used their turn
 
+        //move on to next question
         try {
             TriviaServer.moveAllToNextQuestion();
         } catch (IOException e) {
@@ -122,22 +131,26 @@ public class ClientThread implements Runnable {
         }
     }
 
+    //main client thread logic
     @Override
     public void run() {
         try {
+        	//handle clients who join mid game by making them wait
             if (joinedMidGame) {
                 sendMessage("WaitForNextRound");
                 int waitAt = TriviaServer.getCurrentQuestionIndex();
                 while (TriviaServer.getCurrentQuestionIndex() == waitAt) {
                     Thread.sleep(800);
                 }
-                joinedMidGame = false;
+                joinedMidGame = false; //done waiting
             }
 
+            //continously listens for input from client
             String message;
             while ((message = in.readLine()) != null) {
                 System.out.println("Client-" + clientID + ": " + message);
 
+                //handle timeout message
                 if (message.equalsIgnoreCase("Expired")) {
                     if (canAnswer) {
                         canAnswer = false;
@@ -146,6 +159,7 @@ public class ClientThread implements Runnable {
                         sendMessage("noAnswerPenalty " + score);
                         System.out.println("Client-" + clientID + " did not answer. -20 points.");
 
+                        //kick client after 2 missed answers 
                         if (unansweredCount >= 2) {
                             sendMessage("You have been removed for not answering twice.");
                             System.out.println("Client-" + clientID + " kicked for inactivity.");
@@ -154,18 +168,21 @@ public class ClientThread implements Runnable {
                             return;
                         }
                     }
+                    //let the server handle timeout logic
                     TriviaServer.clientOutOfTime(this);
                 }
 
+                //handle regular answer submission
                 else {
                     checkAnswer(message);
                 }
             }
 
-            // 🟡 Graceful exit: readLine() returned null (client quit)
-            System.out.println("Client-" + clientID + " readLine() returned null.");
+            // readline returned null - client disconnected
+            //debug statement
+            //System.out.println("Client-" + clientID + " readLine() returned null."); 
             TriviaServer.removeClient(this);
-            //close();
+        
 
         } catch (IOException | InterruptedException e) {
             System.out.println("Client-" + clientID + " disconnected (exception).");

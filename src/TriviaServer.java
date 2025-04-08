@@ -26,9 +26,10 @@ public class TriviaServer {
             serverSocket = new ServerSocket(TCP_PORT);
             System.out.println("Trivia Server started on port " + TCP_PORT);
             
+            //start separate thread to listen for UDP buzzes
             new UDPBuzzThread().start();
             
-            //manual kill specific client 
+            //thread to handle manual kick a specific client 
             new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (true) {
@@ -50,7 +51,8 @@ public class TriviaServer {
                     }
                 }
             }).start();
-
+            
+            //thread to handle new client connections 
             new Thread(() -> {
                 while (true) {
                     try {
@@ -60,7 +62,7 @@ public class TriviaServer {
                         synchronized (clients) {
                             clients.add(client);
                         }
-                        
+                        // if game already started, tell the new client to wait 
                         if (currentQuestionIndex > 0) {
                             client.setJoinedMidGame(true);
                             client.sendMessage("WaitForNextRound");
@@ -73,18 +75,13 @@ public class TriviaServer {
                     }
                 }
             }).start();
-            //wait 15 seconds for clients to join 
-            System.out.println("waiting 15 seconds for clients to join..");
+            
+            //delay to allow clients to join before starting the game
+            System.out.println("Waiting 15 seconds for clients to join..");
             Thread.sleep(15000);
             
-            
-
-//            while (clients.size() < 2) {
-//                Thread.sleep(500);
-//            }
-//            System.out.println("Starting Trivia Game!");
-//            sendNextQuestionToAll();
-
+       
+            //check if enough clients joined
             synchronized (clients) {
                 if (clients.size() < 2) {
                     System.out.println("Not enough clients joined. Server shutting down.");
@@ -97,7 +94,7 @@ public class TriviaServer {
                     pool.shutdownNow();
                     System.exit(0);
                 } else {
-                    System.out.println("🎮 Starting Trivia Game!");
+                    System.out.println("Starting Trivia Game!");
                     sendNextQuestionToAll();
                 }
             }
@@ -107,6 +104,7 @@ public class TriviaServer {
         }
     }
 
+    //broadcast new question to all clients
     public static void sendNextQuestionToAll() throws IOException {
         if (currentQuestionIndex >= questions.size()) {
             endGame();
@@ -119,6 +117,7 @@ public class TriviaServer {
         Question q = questions.get(currentQuestionIndex);
         System.out.println("\n❓ " + q.getQuestionNumber() + ": " + q.getQuestionText());
 
+        //send questions and options to all clients 
         for (ClientThread client : clients) {
             client.setCanAnswer(false);
             client.setCorrectAnswer(String.valueOf(q.getCorrectAnswer()));
@@ -134,7 +133,7 @@ public class TriviaServer {
 
         currentQuestionIndex++;
 
-        // 🕓 Start 15-second poll timer
+        // Start 15 second poll timer
         startTimer(15, () -> {
             receivingBuzzes = false;
 
@@ -146,7 +145,7 @@ public class TriviaServer {
 
                 winner.setCanAnswer(true);
                 winner.sendMessage("ACK");
-                System.out.println("🎯 Client-" + winner.getClientID() + " buzzed first and may answer.");
+                System.out.println("Client-" + winner.getClientID() + " buzzed first and may answer.");
 
                 for (ClientThread client : clients) {
                     if (client != winner) {
@@ -154,7 +153,7 @@ public class TriviaServer {
                     }
                 }
 
-                // ⏱️ Start 10-second answer timer
+                // Start 10 second answer timer
                 startTimer(10, () -> {
                     try {
                         clientOutOfTime(winner);
@@ -164,7 +163,8 @@ public class TriviaServer {
                 });
 
             } else {
-                System.out.println("⏱️ No one buzzed in. Skipping to next question.");
+            	//if no one buzzed, move on to next question
+                System.out.println("No one buzzed in. Skipping to next question.");
                 for (ClientThread client : clients) {
                     client.sendMessage("Time expired");
                 }
@@ -179,12 +179,12 @@ public class TriviaServer {
     }
 
 
-
+    //ends the game and shows the final scores
     private static void endGame() throws IOException {
         if (hasPrintedWinners) return;
         hasPrintedWinners = true;
 
-        System.out.println("\n🏁 Game Over. Final Scores:");
+        System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
 
         for (ClientThread client : new ArrayList<>(clients)) {
@@ -200,14 +200,8 @@ public class TriviaServer {
         pool.shutdown();//stop all running client threads
         System.out.println("Server shutting down");
         System.exit(0);
-
-//        //  shutdown after all clients leave at end of game - will change
-//        serverSocket.close();       
-//        pool.shutdownNow();         // stop all client threads
-//        System.out.println("Server shutting down.");
-//        System.exit(0);             // end process
     }
-
+    //load questions from text file
     private static void loadQuestions() {
         try (BufferedReader br = new BufferedReader(new FileReader("Questions.txt"))) {
             String line;
@@ -218,7 +212,7 @@ public class TriviaServer {
             e.printStackTrace();
         }
     }
-
+    //thread that listens for buzzes thru UDP
     private static class UDPBuzzThread extends Thread {
         private final byte[] buffer = new byte[256];
 
@@ -236,19 +230,20 @@ public class TriviaServer {
                             synchronized (TriviaServer.buzzQueue) {
                                 if (!TriviaServer.buzzQueue.contains(client)) {
                                     TriviaServer.buzzQueue.offer(client);
-                                    System.out.println("✅ Client-" + client.getClientID() + " buzzed.");
+                                    System.out.println("Client-" + client.getClientID() + " buzzed.");
                                 }
                             }
                         } else {
-                            System.out.println("⚠️ No matching client found for UDP address: " + address);
+                            System.out.println("No matching client found for UDP address: " + address);
                         }
                     }
                 }
             } catch (IOException e) {
-                System.out.println("❌ UDP Thread error: " + e.getMessage());
+                System.out.println("UDP Thread error: " + e.getMessage());
             }
         }
 
+        //match UDP packet to known client by IP address
         private ClientThread findClientByAddress(InetAddress address) {
             synchronized (clients) {
                 for (ClientThread client : clients) {
@@ -260,18 +255,7 @@ public class TriviaServer {
             return null;
         }
     }
-
-
-        private ClientThread findClientByAddress(InetAddress address) {
-            for (ClientThread client : clients) {
-                if (client.getSocket().getInetAddress().equals(address)) {
-                    return client;
-                }
-            }
-            return null;
-        }
-    
-
+    //starts a countdown timer for poll/answer
     public static void startTimer(int seconds, Runnable onExpire) {
         activeTimer.cancel();
         activeTimer = new Timer();
@@ -295,11 +279,13 @@ public class TriviaServer {
         }, 0, 1000);
     }
 
+    //remove clients and shuts down if no clients left
     public static void removeClient(ClientThread client) throws IOException {
         clients.remove(client);
         System.out.println("Removing Client-" + client.getClientID());
         client.close();
         
+        //if all clients disconnected, server shouldn't be listening infinitely and shut down
         if(clients.isEmpty()) {
         	System.out.println("All clients disconnected. Shutting down server...");
         	serverSocket.close();
@@ -313,9 +299,9 @@ public class TriviaServer {
         return currentQuestionIndex;
     }
 
+   //called if client doesn't answer in time
     public static void clientOutOfTime(ClientThread client) throws IOException {
         client.sendMessage("Time expired");
-        //sendNextQuestionToAll();
         client.incrementUnanswered();
         
         if(client.getUnansweredCount() >= 2) {
@@ -326,7 +312,7 @@ public class TriviaServer {
         	sendNextQuestionToAll(); //move on to next question even if client was removed
         }
     
-
+//unlocks poll after 5 second delay and after answer submission
     public static void handleSubmission() {
         startTimer(5, () -> {
             for (ClientThread client : clients) {
@@ -336,6 +322,7 @@ public class TriviaServer {
         });
     }
 
+    //manually trigger next question if needed
     public static void moveAllToNextQuestion() throws IOException {
         sendNextQuestionToAll();
     }
