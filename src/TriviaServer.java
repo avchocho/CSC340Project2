@@ -235,6 +235,32 @@ public class TriviaServer {
     private static class UDPBuzzThread extends Thread {
         private final byte[] buffer = new byte[256];
 
+//        public void run() {
+//            try (DatagramSocket socket = new DatagramSocket(UDP_PORT)) {
+//                while (true) {
+//                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+//                    socket.receive(packet);
+//                    String message = new String(packet.getData(), 0, packet.getLength()).trim();
+//                    InetAddress address = packet.getAddress();
+//
+//                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
+//                        ClientThread client = findClientByAddress(address);
+//                        if (client != null) {
+//                            synchronized (TriviaServer.buzzQueue) {
+//                                if (!TriviaServer.buzzQueue.contains(client)) {
+//                                    TriviaServer.buzzQueue.offer(client);
+//                                    System.out.println("Client-" + client.getClientID() + " buzzed.");
+//                                }
+//                            }
+//                        } else {
+//                            System.out.println("No matching client found for UDP address: " + address);
+//                        }
+//                    }
+//                }
+//            } catch (IOException e) {
+//                System.out.println("UDP Thread error: " + e.getMessage());
+//            }
+//        }
         public void run() {
             try (DatagramSocket socket = new DatagramSocket(UDP_PORT)) {
                 while (true) {
@@ -243,17 +269,27 @@ public class TriviaServer {
                     String message = new String(packet.getData(), 0, packet.getLength()).trim();
                     InetAddress address = packet.getAddress();
 
-                    if (receivingBuzzes && message.equalsIgnoreCase("buzz")) {
-                        ClientThread client = findClientByAddress(address);
-                        if (client != null) {
-                            synchronized (TriviaServer.buzzQueue) {
-                                if (!TriviaServer.buzzQueue.contains(client)) {
-                                    TriviaServer.buzzQueue.offer(client);
-                                    System.out.println("Client-" + client.getClientID() + " buzzed.");
+                    if (receivingBuzzes && message.toLowerCase().startsWith("buzz:")) {
+                        String[] parts = message.split(":");
+                        if (parts.length == 2) {
+                            try {
+                                int questionNum = Integer.parseInt(parts[1].trim());
+                                if (questionNum == TriviaServer.getCurrentQuestionIndex()) {
+                                    ClientThread client = findClientByAddress(address);
+                                    if (client != null) {
+                                        synchronized (TriviaServer.buzzQueue) {
+                                            if (!TriviaServer.buzzQueue.contains(client)) {
+                                                TriviaServer.buzzQueue.offer(client);
+                                                System.out.println("Client-" + client.getClientID() + " buzzed for Q" + questionNum);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    System.out.println("Ignored stale or out-of-sync buzz for Q" + questionNum);
                                 }
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid buzz message: " + message);
                             }
-                        } else {
-                            System.out.println("No matching client found for UDP address: " + address);
                         }
                     }
                 }
@@ -261,6 +297,7 @@ public class TriviaServer {
                 System.out.println("UDP Thread error: " + e.getMessage());
             }
         }
+
 
         private ClientThread findClientByAddress(InetAddress address) {
             synchronized (clients) {
