@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+
 public class TriviaServer {
     private static final int TCP_PORT = 1234;
     private static final int UDP_PORT = 1235;
@@ -221,12 +222,16 @@ public class TriviaServer {
 
     // Loads questions from a text file
     private static void loadQuestions() {
-        try (BufferedReader br = new BufferedReader(new FileReader("Questions.txt"))) {
+        try (InputStream is = TriviaServer.class.getResourceAsStream("/Questions.txt");
+             BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+
             String line;
             while ((line = br.readLine()) != null) {
                 questions.add(new Question(line));
             }
-        } catch (IOException e) {
+
+        } catch (IOException | NullPointerException e) {
+            System.out.println("Failed to load Questions.txt from JAR");
             e.printStackTrace();
         }
     }
