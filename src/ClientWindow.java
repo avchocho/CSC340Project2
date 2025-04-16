@@ -197,11 +197,11 @@ public class ClientWindow implements ActionListener {
                     msg.append("Final Scoreboard:\n\n");
 
                     boolean youWon = false;
-                    String yourLabel = "Client " + getClientIDFromTitle(); // helper function
+                    String yourLabel = "Client-" + getClientIDFromTitle(); // helper function
 
                     for (int i = 0; i < sorted.size(); i++) {
                         Map.Entry<String, Integer> entry = sorted.get(i);
-                        msg.append(String.format("%2d. %s — %d pts\n", i + 1, entry.getKey(), entry.getValue()));
+                        msg.append(String.format("%2d. %s: %d pts\n", i + 1, entry.getKey(), entry.getValue()));
 
                         if (i == 0 && entry.getKey().equals(yourLabel)) {
                             youWon = true;
