@@ -151,22 +151,23 @@ public class ClientThread implements Runnable {
                 System.out.println("Client-" + clientID + ": " + message);
 
                 //handle timeout message
+                //could delete since its being dealt in server side now?
                 if (message.equalsIgnoreCase("Expired")) {
                     if (canAnswer) {
                         canAnswer = false;
                         score -= 20;
-                        unansweredCount++;
+                        //unansweredCount++;
                         sendMessage("noAnswerPenalty " + score);
                         System.out.println("Client-" + clientID + " did not answer. -20 points.");
 
                         //kick client after 2 missed answers 
-                        if (unansweredCount >= 2) {
-                            sendMessage("You have been removed for not answering twice.");
-                            System.out.println("Client-" + clientID + " kicked for inactivity.");
-                            TriviaServer.removeClient(this);
-                            close();
-                            return;
-                        }
+//                        if (unansweredCount >= 2) {
+//                            sendMessage("You have been removed for not answering twice.");
+//                            System.out.println("Client-" + clientID + " kicked for inactivity.");
+//                            TriviaServer.removeClient(this);
+//                            close();
+//                            return;
+//                        }
                     }
                     //let the server handle timeout logic
                     TriviaServer.clientOutOfTime(this);

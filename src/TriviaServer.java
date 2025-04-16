@@ -86,7 +86,7 @@ public class TriviaServer {
             Thread.sleep(15000);
 
             synchronized (clients) {
-                if (clients.size() < 2) {
+                if (clients.size() < 1) { //change back to 2
                     System.out.println("Not enough clients joined. Server shutting down.");
                     for (ClientThread client: new ArrayList<>(clients)) {
                         client.sendMessage("not_enough_players");
@@ -186,10 +186,22 @@ public class TriviaServer {
 
         System.out.println("\n Game Over. Final Scores:");
         clients.sort((a, b) -> b.getScore() - a.getScore());
+        
+        //scoreboard 
+        StringBuilder scoreboard = new StringBuilder("SCOREBOARD|");
+        for (ClientThread client : clients) {
+            scoreboard.append("Client-")
+                      .append(client.getClientID())
+                      .append(":")
+                      .append(client.getScore())
+                      .append(";");
+        }
 
+        //sends final scores of clients to each client 
         for (ClientThread client : new ArrayList<>(clients)) {
             try {
                 client.sendMessage("FINAL_SCORE:" + client.getScore());
+                client.sendMessage(scoreboard.toString()); //sends full scoreboard i hope 
                 client.sendMessage("Game Over!");
                 System.out.println("Client " + client.getClientID() + ": " + client.getScore());
             } catch (Exception e) {
@@ -324,15 +336,15 @@ public class TriviaServer {
 
     // Called when a client runs out of time to answer
     public static void clientOutOfTime(ClientThread client) throws IOException {
-        client.sendMessage("Time expired");
-        client.incrementUnanswered();
-
-        if(client.getUnansweredCount() >= 2) {
-            System.out.println("Client-" + client.getClientID() + " terminated (missed 2 questions)");
-            client.sendMessage("killswitch");
-            removeClient(client);
-        }
-        sendNextQuestionToAll();
+    	if (client.getCanAnswer()) {
+    		client.setCanAnswer(false);
+    		client.decreaseScore(20);
+    		client.sendMessage("noAnswerPenalty " + client.getScore());
+    		System.out.println("Client -" + client.getClientID() + " buzzed in but didn't answer. -20");
+    	}
+    	
+    	client.sendMessage("Time expired");
+    	sendNextQuestionToAll();
     }
 
     // Handles timer after answer submission (5 seconds)

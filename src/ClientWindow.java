@@ -2,6 +2,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
@@ -83,6 +88,11 @@ public class ClientWindow implements ActionListener {
             JOptionPane.showMessageDialog(null, "Could not connect to server.");
         }
     }
+    private String getClientIDFromTitle() {
+        String title = window.getTitle();
+        int idx = title.lastIndexOf("Client-");
+        return idx != -1 ? title.substring(idx) : "";
+    }
 
     // Listens to server messages and updates GUI accordingly
     private void listenToServer() {
@@ -135,7 +145,7 @@ public class ClientWindow implements ActionListener {
                 } else if (line.toLowerCase().startsWith("wrong")) {
                     userScore -= 10;
                     updateGameMessage("Wrong answer! -10 points", Color.RED);
-                } else if (line.toLowerCase().startsWith("time")) {
+                } else if (line.toLowerCase().startsWith("noanswerpenalty")) {
                     userScore -= 20;
                     updateGameMessage("You did not answer in time. -20 points", Color.RED);
                 } else if (line.contains("WaitForNextRound")) {
@@ -164,7 +174,46 @@ public class ClientWindow implements ActionListener {
                             JOptionPane.WARNING_MESSAGE);
                         System.exit(0);
                     });
+                } else if (line.startsWith("SCOREBOARD|")) {
+                    String rawData = line.substring("SCOREBOARD|".length());
+
+                    // Split into entries like Client-0:30;Client-1:10
+                    String[] entries = rawData.split(";");
+                    Map<String, Integer> scores = new HashMap<>();
+
+                    for (String entry : entries) {
+                        if (!entry.isEmpty()) {
+                            String[] parts = entry.split(":");
+                            scores.put(parts[0], Integer.parseInt(parts[1]));
+                        }
+                    }
+
+                    // Sort by score descending
+                    List<Map.Entry<String, Integer>> sorted = new ArrayList<>(scores.entrySet());
+                    sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+                    // Build message
+                    StringBuilder msg = new StringBuilder();
+                    msg.append("Final Scoreboard:\n\n");
+
+                    boolean youWon = false;
+                    String yourLabel = "Client " + getClientIDFromTitle(); // helper function
+
+                    for (int i = 0; i < sorted.size(); i++) {
+                        Map.Entry<String, Integer> entry = sorted.get(i);
+                        msg.append(String.format("%2d. %s — %d pts\n", i + 1, entry.getKey(), entry.getValue()));
+
+                        if (i == 0 && entry.getKey().equals(yourLabel)) {
+                            youWon = true;
+                        }
+                    }
+
+                    msg.append("\n");
+                    msg.append(youWon ? "You won!" : "You lost. Better luck next time!");
+
+                    JOptionPane.showMessageDialog(window, msg.toString(), "Game Over", JOptionPane.INFORMATION_MESSAGE);
                 }
+
             }
         } catch (IOException e) {
             System.out.println("Disconnected from server.");
