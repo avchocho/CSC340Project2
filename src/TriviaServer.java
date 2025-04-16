@@ -86,7 +86,7 @@ public class TriviaServer {
             Thread.sleep(15000);
 
             synchronized (clients) {
-                if (clients.size() < 1) { //change back to 2
+                if (clients.size() < 2) { 
                     System.out.println("Not enough clients joined. Server shutting down.");
                     for (ClientThread client: new ArrayList<>(clients)) {
                         client.sendMessage("not_enough_players");
