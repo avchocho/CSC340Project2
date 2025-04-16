@@ -88,10 +88,11 @@ public class ClientWindow implements ActionListener {
             JOptionPane.showMessageDialog(null, "Could not connect to server.");
         }
     }
+    
     private String getClientIDFromTitle() {
-        String title = window.getTitle();
+        String title = window.getTitle();  // "Trivia Server: Client-0"
         int idx = title.lastIndexOf("Client-");
-        return idx != -1 ? title.substring(idx) : "";
+        return (idx != -1) ? title.substring(idx) : "";  // returns "Client-0"
     }
 
     // Listens to server messages and updates GUI accordingly
@@ -197,7 +198,7 @@ public class ClientWindow implements ActionListener {
                     msg.append("Final Scoreboard:\n\n");
 
                     boolean youWon = false;
-                    String yourLabel = "Client-" + getClientIDFromTitle(); // helper function
+                    String yourLabel = getClientIDFromTitle(); // helper function
 
                     for (int i = 0; i < sorted.size(); i++) {
                         Map.Entry<String, Integer> entry = sorted.get(i);
